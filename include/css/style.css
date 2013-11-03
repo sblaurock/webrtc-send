@@ -1,0 +1,15 @@
+body {
+	background: url('../img/background.jpg');
+}
+
+h1 {
+	font-size: 60px;
+	color: #eee;
+	text-align: center;
+}
+
+p.lead {
+	color: #eee;
+	font-size: 36px;
+	text-align: center;
+}
