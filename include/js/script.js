@@ -1,5 +1,6 @@
 var bytecast = function() {
 	var _options = {
+		key: '4u478wggtkxzuxr',
 		dropArea: {
 			reference: $('#drop'),
 			hoverClass: 'hover',
@@ -11,14 +12,17 @@ var bytecast = function() {
 			created: 'Session created. Share this link:<br />',
 			connecting: 'Connecting to peer...',
 			errorConnecting: 'A connection could not be established.',
-			established: 'Connection established.'
+			established: 'Connection established.',
+			sending: 'Starting transfer...',
+			waiting: 'Waiting for data...'
 		}
 	};
 
 	var _session = {
 		id: '',
 		file: null,
-		reference: null
+		reference: null,
+		peer: null
 	};
 
 	return {
@@ -45,12 +49,14 @@ var bytecast = function() {
 			_options.dropArea.reference.on('drop', function(e) {
 				if(e.originalEvent.dataTransfer) {
 					if(e.originalEvent.dataTransfer.files.length) {
-						_session.file = e.originalEvent.dataTransfer.files[0];
+						var file = e.originalEvent.dataTransfer.files[0];
+
 						toggleActiveStopEvent(e);
+						_session.file = file;
 
 						instance.initiateSession(function(id) {
 							_options.dropArea.reference.html(_options.copy.created + document.URL + '#' + id);
-							instance.listenForPeer();
+							instance.listenForPeer(file);
 						});
 					}
 				}
@@ -60,7 +66,9 @@ var bytecast = function() {
 		// Create a peer session.
 		initiateSession: function(callback) {
 			var instance = this;
-			var peer = new Peer({key: '4u478wggtkxzuxr'});
+			var peer = new Peer({
+				key: _options.key
+			});
 
 			_options.dropArea.reference.html(_options.copy.initializing);
 
@@ -68,33 +76,56 @@ var bytecast = function() {
 				_session.id = id;
 				_session.reference = peer;
 
-				callback(id, peer);
+				if(typeof callback === 'function') {
+					callback(id, peer);
+				}
 			});
 		},
 
-		// Listen for incoming connections.
-		listenForPeer: function() {
-			_session.reference.on('connection', function(c) {
+		// Listen for incoming connection and send file when established.
+		listenForPeer: function(file) {
+			_session.reference.on('connection', function(connection) {
 				_options.dropArea.reference.html(_options.copy.established);
+				_session.peer = connection.peer;
+
+				connection.send(file);
 			});
 		},
 
-		// Connect to peer if we have a hash reference to their ID.
-		connectToPeer: function(peerId) {
-			this.initiateSession(function(id, reference) {
+		// Connect to host if we have a hash reference to their ID.
+		connectToHost: function(peerId) {
+			var instance = this;
+
+			instance.initiateSession(function(id, reference) {
+				var connection = reference.connect(peerId);
+
 				_options.dropArea.reference.html(_options.copy.connecting);
-				
-				var session = reference.connect(peerId, {
-					label: 'file'
-				});
 
-				session.on('open', function() {
+				connection.on('open', function() {
 					_options.dropArea.reference.html(_options.copy.established);
+					_session.peer = peerId;
+
+					instance.waitForData(connection);
 				});
 
-				session.on('error', function(err) {
+				connection.on('error', function(err) {
 					_options.dropArea.reference.html(_options.copy.errorConnecting);
 				});
+			});
+		},
+
+		// Create link to stream data from host when available.
+		waitForData: function(connection) {
+			_options.dropArea.reference.html(_options.copy.waiting);
+
+			connection.on('data', function(data) {
+				if (data.constructor === ArrayBuffer) {
+					var dataView = new Uint8Array(data);
+					var dataBlob = new Blob([dataView]);
+					var url = window.URL.createObjectURL(dataBlob);
+
+					console.log(url);
+				}
 			});
 		}
 	};
@@ -105,7 +136,7 @@ $(document).ready(function() {
 	var hash = window.location.hash;
 
 	if(hash && typeof hash === 'string' && hash.length > 0) {
-		bytecast.connectToPeer(hash.replace(/\W/g, ''));
+		bytecast.connectToHost(hash.replace(/\W/g, ''));
 	} else {
 		bytecast.bindDropEvents();
 	}
