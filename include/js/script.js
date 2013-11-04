@@ -6,16 +6,19 @@ var bytecast = function() {
 			activeClass: 'active'
 		},
 		copy: {
+			drag: 'Drag a file here...',
 			initializing: 'Creating session...',
 			created: 'Session created. Share this link:<br />',
-			connecting: 'Connecting to peer...'
+			connecting: 'Connecting to peer...',
+			errorConnecting: 'A connection could not be established.',
+			established: 'Connection established.'
 		}
 	};
 
 	var _session = {
 		id: '',
 		file: null,
-		peer: null
+		reference: null
 	};
 
 	return {
@@ -33,6 +36,8 @@ var bytecast = function() {
 				e.stopPropagation();
 			};
 
+			_options.dropArea.reference.html(_options.copy.drag);
+
 			_options.dropArea.reference.on('dragover', stopEvent);
 			_options.dropArea.reference.on('dragenter', toggleActiveStopEvent);
 			_options.dropArea.reference.on('dragleave', toggleActiveStopEvent);
@@ -43,7 +48,7 @@ var bytecast = function() {
 						_session.file = e.originalEvent.dataTransfer.files[0];
 						toggleActiveStopEvent(e);
 
-						instance.initiateSession(function() {
+						instance.initiateSession(function(id) {
 							_options.dropArea.reference.html(_options.copy.created + document.URL + '#' + id);
 							instance.listenForPeer();
 						});
@@ -61,24 +66,35 @@ var bytecast = function() {
 
 			peer.on('open', function(id) {
 				_session.id = id;
-				_session.peer = peer;
+				_session.reference = peer;
 
-				callback(id);
+				callback(id, peer);
 			});
 		},
 
 		// Listen for incoming connections.
 		listenForPeer: function() {
-			_session.peer.on('connection', function(c) {
-				console.log('Connection established.');
+			_session.reference.on('connection', function(c) {
+				_options.dropArea.reference.html(_options.copy.established);
 			});
 		},
 
-		// Connect to peer if we have a hash.
+		// Connect to peer if we have a hash reference to their ID.
 		connectToPeer: function(peerId) {
-			this.initiateSession(function(id) {
+			this.initiateSession(function(id, reference) {
 				_options.dropArea.reference.html(_options.copy.connecting);
-				console.log(peerId, id);
+				
+				var session = reference.connect(peerId, {
+					label: 'file'
+				});
+
+				session.on('open', function() {
+					_options.dropArea.reference.html(_options.copy.established);
+				});
+
+				session.on('error', function(err) {
+					_options.dropArea.reference.html(_options.copy.errorConnecting);
+				});
 			});
 		}
 	};
@@ -89,7 +105,7 @@ $(document).ready(function() {
 	var hash = window.location.hash;
 
 	if(hash && typeof hash === 'string' && hash.length > 0) {
-		bytecast.connectToPeer(hash.replace('#', ''));
+		bytecast.connectToPeer(hash.replace(/\W/g, ''));
 	} else {
 		bytecast.bindDropEvents();
 	}
