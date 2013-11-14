@@ -6,10 +6,10 @@ var bytecast = function() {
 			hoverClass: 'hover',
 			activeClass: 'active'
 		},
-		copy: {
+		messages: {
 			drag: 'Drag a file here...',
 			initializing: 'Creating session...',
-			created: 'Session created. Share this link:<br />',
+			created: 'Session created. Share this link:<br />{{link}}',
 			connecting: 'Connecting to peer...',
 			errorConnecting: 'A connection could not be established.',
 			established: 'Connection established.',
@@ -17,7 +17,6 @@ var bytecast = function() {
 			waiting: 'Waiting for data...'
 		}
 	};
-
 	var _session = {
 		id: '',
 		file: null,
@@ -25,12 +24,38 @@ var bytecast = function() {
 		peer: null
 	};
 
+	// Display a message to the user.
+	_setMessage = function(identifier, data) {
+		var message = _options.messages[identifier];
+
+		if(!message || typeof message !== 'string') {
+			return false;
+		}
+
+		if(data !== undefined && typeof data === 'object') {
+			var placeholders = message.match(/{{[\w]+}}/g) || [];
+			var current;
+			var replacement;
+
+			for(var i = 0, length = placeholders.length; i < length; i++) {
+				current = placeholders[i];
+				replacement = data[current.replace(/\W/g, '')];
+
+				if(replacement) {
+					message = message.replace(current, replacement);
+				}
+			}
+		}
+
+		_options.dropArea.reference.html(message);
+	};
+
 	return {
 		// Handle events around drag and drop functionality.
 		bindDropEvents: function() {
 			var instance = this;
 
-			var toggleActiveStopEvent = function(e) {
+			var toggleDropHover = function(e) {
 				_options.dropArea.reference.toggleClass(_options.dropArea.hoverClass);
 				stopEvent(e);
 			};
@@ -40,22 +65,24 @@ var bytecast = function() {
 				e.stopPropagation();
 			};
 
-			_options.dropArea.reference.html(_options.copy.drag);
+			_setMessage('drag');
 
 			_options.dropArea.reference.on('dragover', stopEvent);
-			_options.dropArea.reference.on('dragenter', toggleActiveStopEvent);
-			_options.dropArea.reference.on('dragleave', toggleActiveStopEvent);
+			_options.dropArea.reference.on('dragenter', toggleDropHover);
+			_options.dropArea.reference.on('dragleave', toggleDropHover);
 
 			_options.dropArea.reference.on('drop', function(e) {
 				if(e.originalEvent.dataTransfer) {
 					if(e.originalEvent.dataTransfer.files.length) {
 						var file = e.originalEvent.dataTransfer.files[0];
 
-						toggleActiveStopEvent(e);
+						toggleDropHover(e);
 						_session.file = file;
 
 						instance.initiateSession(function(id) {
-							_options.dropArea.reference.html(_options.copy.created + document.URL + '#' + id);
+							_setMessage('created', {
+								'link': document.URL + '#' + id
+							});
 							instance.listenForPeer(file);
 						});
 					}
@@ -70,7 +97,7 @@ var bytecast = function() {
 				key: _options.key
 			});
 
-			_options.dropArea.reference.html(_options.copy.initializing);
+			_setMessage('initializing');
 
 			peer.on('open', function(id) {
 				_session.id = id;
@@ -85,7 +112,7 @@ var bytecast = function() {
 		// Listen for incoming connection and send file when established.
 		listenForPeer: function(file) {
 			_session.reference.on('connection', function(connection) {
-				_options.dropArea.reference.html(_options.copy.established);
+				_setMessage('established');
 				_session.peer = connection.peer;
 
 				connection.send(file);
@@ -99,24 +126,24 @@ var bytecast = function() {
 			instance.initiateSession(function(id, reference) {
 				var connection = reference.connect(peerId);
 
-				_options.dropArea.reference.html(_options.copy.connecting);
+				_setMessage('connecting');
 
 				connection.on('open', function() {
-					_options.dropArea.reference.html(_options.copy.established);
+					_setMessage('established');
 					_session.peer = peerId;
 
 					instance.waitForData(connection);
 				});
 
 				connection.on('error', function(err) {
-					_options.dropArea.reference.html(_options.copy.errorConnecting);
+					_setMessage('errorConnecting');
 				});
 			});
 		},
 
 		// Create link to stream data from host when available.
 		waitForData: function(connection) {
-			_options.dropArea.reference.html(_options.copy.waiting);
+			_setMessage('waiting');
 
 			connection.on('data', function(data) {
 				if (data.constructor === ArrayBuffer) {
