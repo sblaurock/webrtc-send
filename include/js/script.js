@@ -9,12 +9,12 @@ var bytecast = function() {
 		messages: {
 			drag: 'Drag a file here...',
 			initializing: 'Initializing session...',
-			ready: 'File is ready. Share this link:<br /><a target="_blank" href="{{link}}">{{link}}</a>',
+			ready: 'File is ready. Share this link:<br />{{link}}',
 			connecting: 'Connecting to peer...',
 			error: 'A connection could not be established.',
 			established: 'Connection established.',
-			sending: 'Starting transfer...',
-			waiting: 'Waiting for data...',
+			sending: 'Sending...<br /><img src="include/img/loader.gif" />',
+			receiving: 'Receiving...<br /><img src="include/img/loader.gif" />',
 			file: 'File is ready.<br /><a target="_blank" href="{{url}}">Click here to download!</a>'
 		}
 	};
@@ -103,7 +103,7 @@ var bytecast = function() {
 
 		// Create link to stream data from host when available.
 		waitForData: function(connection) {
-			_setMessage('waiting');
+			_setMessage('receiving');
 
 			connection.on('data', function(data) {
 				var file = data.file;
