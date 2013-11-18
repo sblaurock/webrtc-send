@@ -9,12 +9,13 @@ var bytecast = function() {
 		messages: {
 			drag: 'Drag a file here...',
 			initializing: 'Initializing session...',
-			ready: 'File is ready. Share this link:<br />{{link}}',
+			ready: 'File is ready. Share this link:<br /><a target="_blank" href="{{link}}">{{link}}</a>',
 			connecting: 'Connecting to peer...',
 			error: 'A connection could not be established.',
 			established: 'Connection established.',
 			sending: 'Starting transfer...',
-			waiting: 'Waiting for data...'
+			waiting: 'Waiting for data...',
+			file: 'File is ready.<br /><a target="_blank" href="{{url}}">Click here to download!</a>'
 		}
 	};
 
@@ -45,6 +46,14 @@ var bytecast = function() {
 				_host.handleDrop(e);
 			});
 
+			window.onunload = window.onbeforeunload = function() {
+				var session = _session.reference;
+
+				if (session !== null && !session.destroyed) {
+					session.destroy();
+				}
+			};
+
 			_setMessage('drag');
 		},
 
@@ -69,7 +78,13 @@ var bytecast = function() {
 		listenForPeer: function(file) {
 			_session.reference.on('connection', function(connection) {
 				_handleConnection(connection, function() {
-					connection.send(file);
+					_setMessage('sending');
+					connection.send({
+						file: file,
+						name: file.name,
+						size: file.size,
+						type: file.type
+					});
 				});
 			});
 		}
@@ -91,12 +106,16 @@ var bytecast = function() {
 			_setMessage('waiting');
 
 			connection.on('data', function(data) {
-				if (data.constructor === ArrayBuffer) {
-					var dataView = new Uint8Array(data);
-					var dataBlob = new Blob([dataView]);
+				var file = data.file;
+
+				if (file && file.constructor === ArrayBuffer) {
+					var dataView = new Uint8Array(file);
+					var dataBlob = new Blob([dataView], {type: data.type});
 					var url = window.URL.createObjectURL(dataBlob);
 
-					console.log(url);
+					_setMessage('file', {
+						url: url
+					});
 				}
 			});
 		}
