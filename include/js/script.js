@@ -8,10 +8,10 @@ var bytecast = function() {
 		},
 		messages: {
 			drag: 'Drag a file here...',
-			initializing: 'Creating session...',
-			created: 'Session created. Share this link:<br />{{link}}',
+			initializing: 'Initializing session...',
+			ready: 'File is ready. Share this link:<br />{{link}}',
 			connecting: 'Connecting to peer...',
-			errorConnecting: 'A connection could not be established.',
+			error: 'A connection could not be established.',
 			established: 'Connection established.',
 			sending: 'Starting transfer...',
 			waiting: 'Waiting for data...'
@@ -20,7 +20,6 @@ var bytecast = function() {
 
 	var _session = {
 		id: '',
-		file: null,
 		reference: null,
 		peer: null
 	};
@@ -58,22 +57,20 @@ var bytecast = function() {
 
 				_session.file = file;
 
-				_createSession(function(id) {
-					_host.listenForPeer(file);
-					_setMessage('created', {
-						'link': document.URL + '#' + id
-					});
+				_setMessage('ready', {
+					'link': document.URL + '#' + _session.id
 				});
+
+				this.listenForPeer(file);
 			}
 		},
 
 		// Listen for incoming connection and send file when established.
 		listenForPeer: function(file) {
 			_session.reference.on('connection', function(connection) {
-				_session.peer = connection.peer;
-
-				_setMessage('established');
-				connection.send(file);
+				_handleConnection(connection, function() {
+					connection.send(file);
+				});
 			});
 		}
 	};
@@ -81,21 +78,11 @@ var bytecast = function() {
 	var _peer = {
 		// Connect to host if we have a hash reference to their ID.
 		connectToHost: function(peerId) {
-			_createSession(function(id, reference) {
-				var connection = reference.connect(peerId);
+			var connection = _session.reference.connect(peerId);
 
-				_setMessage('connecting');
-
-				connection.on('open', function() {
-					_setMessage('established');
-					_session.peer = peerId;
-
-					this.waitForData(connection);
-				});
-
-				connection.on('error', function(err) {
-					_setMessage('errorConnecting');
-				});
+			_setMessage('connecting');
+			_handleConnection(connection, function() {
+				_peer.waitForData(connection);
 			});
 		},
 
@@ -117,19 +104,36 @@ var bytecast = function() {
 
 	// Create a peer session.
 	_createSession = function(callback) {
-		var peer = new Peer({
+		var session = new Peer({
 			key: _options.key
 		});
 
 		_setMessage('initializing');
 
-		peer.on('open', function(id) {
+		session.on('open', function(id) {
 			_session.id = id;
-			_session.reference = peer;
+			_session.reference = session;
 
 			if(typeof callback === 'function') {
-				callback(id, peer);
+				callback();
 			}
+		});
+	};
+
+	// Bind connection handler.
+	_handleConnection = function(connection, callback) {
+		connection.on('open', function() {
+			_session.peer = connection.peer;
+
+			_setMessage('established');
+
+			if(typeof callback === 'function') {
+				callback();
+			}
+		});
+
+		connection.on('error', function(err) {
+			_setMessage('errorConnecting');
 		});
 	};
 
@@ -162,11 +166,15 @@ var bytecast = function() {
 	// Public interface.
 	return {
 		initiateHost: function() {
-			_host.bindEvents();
+			_createSession(function() {
+				_host.bindEvents();
+			});
 		},
 
 		initiatePeer: function(peerId) {
-			_peer.connectToHost(peerId);
+			_createSession(function(id, session) {
+				_peer.connectToHost(peerId);
+			});
 		}
 	};
 }();
