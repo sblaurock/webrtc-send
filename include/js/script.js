@@ -17,11 +17,120 @@ var bytecast = function() {
 			waiting: 'Waiting for data...'
 		}
 	};
+
 	var _session = {
 		id: '',
 		file: null,
 		reference: null,
 		peer: null
+	};
+
+	var _host = {
+		// Bind events around drag and drop functionality.
+		bindEvents: function() {
+			var toggleDropHover = function(e) {
+				_options.dropArea.reference.toggleClass(_options.dropArea.hoverClass);
+				stopEvent(e);
+			};
+
+			var stopEvent = function(e) {
+				e.preventDefault();
+				e.stopPropagation();
+			};
+
+			_options.dropArea.reference.on('dragover', stopEvent);
+			_options.dropArea.reference.on('dragenter', toggleDropHover);
+			_options.dropArea.reference.on('dragleave', toggleDropHover);
+			_options.dropArea.reference.on('drop', function(e) {
+				toggleDropHover(e);
+				_host.handleDrop(e);
+			});
+
+			_setMessage('drag');
+		},
+
+		// Initiate a session when a file is dropped.
+		handleDrop: function(e) {
+			var dataTransfer = e.originalEvent.dataTransfer;
+
+			if(dataTransfer && dataTransfer.files.length) {
+				var file = dataTransfer.files[0];
+
+				_session.file = file;
+
+				_createSession(function(id) {
+					_host.listenForPeer(file);
+					_setMessage('created', {
+						'link': document.URL + '#' + id
+					});
+				});
+			}
+		},
+
+		// Listen for incoming connection and send file when established.
+		listenForPeer: function(file) {
+			_session.reference.on('connection', function(connection) {
+				_session.peer = connection.peer;
+
+				_setMessage('established');
+				connection.send(file);
+			});
+		}
+	};
+
+	var _peer = {
+		// Connect to host if we have a hash reference to their ID.
+		connectToHost: function(peerId) {
+			_createSession(function(id, reference) {
+				var connection = reference.connect(peerId);
+
+				_setMessage('connecting');
+
+				connection.on('open', function() {
+					_setMessage('established');
+					_session.peer = peerId;
+
+					this.waitForData(connection);
+				});
+
+				connection.on('error', function(err) {
+					_setMessage('errorConnecting');
+				});
+			});
+		},
+
+		// Create link to stream data from host when available.
+		waitForData: function(connection) {
+			_setMessage('waiting');
+
+			connection.on('data', function(data) {
+				if (data.constructor === ArrayBuffer) {
+					var dataView = new Uint8Array(data);
+					var dataBlob = new Blob([dataView]);
+					var url = window.URL.createObjectURL(dataBlob);
+
+					console.log(url);
+				}
+			});
+		}
+	};
+
+	// Create a peer session.
+	_createSession = function(callback) {
+		var peer = new Peer({
+			key: _options.key
+		});
+
+		_setMessage('initializing');
+
+		peer.on('open', function(id) {
+			_session.id = id;
+			_session.reference = peer;
+
+			if(typeof callback === 'function') {
+				callback(id, peer);
+			}
+		});
 	};
 
 	// Display a message to the user.
@@ -50,110 +159,14 @@ var bytecast = function() {
 		_options.dropArea.reference.html(message);
 	};
 
+	// Public interface.
 	return {
-		// Handle events around drag and drop functionality.
-		bindDropEvents: function() {
-			var instance = this;
-
-			var toggleDropHover = function(e) {
-				_options.dropArea.reference.toggleClass(_options.dropArea.hoverClass);
-				stopEvent(e);
-			};
-
-			var stopEvent = function(e) {
-				e.preventDefault();
-				e.stopPropagation();
-			};
-
-			_setMessage('drag');
-
-			_options.dropArea.reference.on('dragover', stopEvent);
-			_options.dropArea.reference.on('dragenter', toggleDropHover);
-			_options.dropArea.reference.on('dragleave', toggleDropHover);
-
-			_options.dropArea.reference.on('drop', function(e) {
-				if(e.originalEvent.dataTransfer) {
-					if(e.originalEvent.dataTransfer.files.length) {
-						var file = e.originalEvent.dataTransfer.files[0];
-
-						toggleDropHover(e);
-						_session.file = file;
-
-						instance.initiateSession(function(id) {
-							_setMessage('created', {
-								'link': document.URL + '#' + id
-							});
-							instance.listenForPeer(file);
-						});
-					}
-				}
-			});
+		initiateHost: function() {
+			_host.bindEvents();
 		},
 
-		// Create a peer session.
-		initiateSession: function(callback) {
-			var instance = this;
-			var peer = new Peer({
-				key: _options.key
-			});
-
-			_setMessage('initializing');
-
-			peer.on('open', function(id) {
-				_session.id = id;
-				_session.reference = peer;
-
-				if(typeof callback === 'function') {
-					callback(id, peer);
-				}
-			});
-		},
-
-		// Listen for incoming connection and send file when established.
-		listenForPeer: function(file) {
-			_session.reference.on('connection', function(connection) {
-				_setMessage('established');
-				_session.peer = connection.peer;
-
-				connection.send(file);
-			});
-		},
-
-		// Connect to host if we have a hash reference to their ID.
-		connectToHost: function(peerId) {
-			var instance = this;
-
-			instance.initiateSession(function(id, reference) {
-				var connection = reference.connect(peerId);
-
-				_setMessage('connecting');
-
-				connection.on('open', function() {
-					_setMessage('established');
-					_session.peer = peerId;
-
-					instance.waitForData(connection);
-				});
-
-				connection.on('error', function(err) {
-					_setMessage('errorConnecting');
-				});
-			});
-		},
-
-		// Create link to stream data from host when available.
-		waitForData: function(connection) {
-			_setMessage('waiting');
-
-			connection.on('data', function(data) {
-				if (data.constructor === ArrayBuffer) {
-					var dataView = new Uint8Array(data);
-					var dataBlob = new Blob([dataView]);
-					var url = window.URL.createObjectURL(dataBlob);
-
-					console.log(url);
-				}
-			});
+		initiatePeer: function(peerId) {
+			_peer.connectToHost(peerId);
 		}
 	};
 }();
@@ -163,8 +176,8 @@ $(document).ready(function() {
 	var hash = window.location.hash;
 
 	if(hash && typeof hash === 'string' && hash.length > 0) {
-		bytecast.connectToHost(hash.replace(/\W/g, ''));
+		bytecast.initiatePeer(hash.replace(/\W/g, ''));
 	} else {
-		bytecast.bindDropEvents();
+		bytecast.initiateHost();
 	}
 });
