@@ -11,12 +11,15 @@ var bytecast = function() {
 			initializing: 'Initializing session...',
 			ready: 'File is ready. Share this link:<br />{{link}}',
 			connecting: 'Connecting to peer...',
-			error: 'A connection could not be established.',
 			established: 'Connection established.',
 			sending: 'Sending...<br /><img src="include/img/loader.gif" />',
 			receiving: 'Receiving...<br /><img src="include/img/loader.gif" />',
 			file: 'File is ready.<br /><a target="_blank" href="{{url}}">Click here to download!</a>',
-			success: 'File was sent successfully!'
+			success: '<p class="success">File was sent successfully!</p>',
+			error: '<p class="error">A connection could not be established.</p>'
+		},
+		timeout: {
+			connectToHost: 3000
 		}
 	};
 
@@ -102,10 +105,21 @@ var bytecast = function() {
 	var _peer = {
 		// Connect to host if we have a hash reference to their ID.
 		connectToHost: function(peerId) {
+			var timeout;
 			var connection = _session.reference.connect(peerId);
 
 			_setMessage('connecting');
+
+			// If we can't connect within defined time frame then message user and destroy session.
+			timeout = setTimeout(function() {
+				_setMessage('error');
+				_session.reference.destroy();
+
+				return;
+			}, _options.timeout.connectToHost);
+
 			_handleConnection(connection, function() {
+				clearTimeout(timeout);
 				_setMessage('receiving');
 				_listen(connection, _peer.handleData);
 			});
@@ -155,15 +169,13 @@ var bytecast = function() {
 
 			_setMessage('established');
 
-			console.log(_session);
-
 			if(typeof callback === 'function') {
 				callback();
 			}
 		});
 
 		connection.on('error', function(err) {
-			_setMessage('errorConnecting');
+			_setMessage('error');
 		});
 	};
 
