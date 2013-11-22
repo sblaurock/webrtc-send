@@ -15,14 +15,16 @@ var bytecast = function() {
 			established: 'Connection established.',
 			sending: 'Sending...<br /><img src="include/img/loader.gif" />',
 			receiving: 'Receiving...<br /><img src="include/img/loader.gif" />',
-			file: 'File is ready.<br /><a target="_blank" href="{{url}}">Click here to download!</a>'
+			file: 'File is ready.<br /><a target="_blank" href="{{url}}">Click here to download!</a>',
+			success: 'File was sent successfully!'
 		}
 	};
 
 	var _session = {
 		id: '',
 		reference: null,
-		peer: null
+		peer: null,
+		connection: null
 	};
 
 	var _host = {
@@ -79,6 +81,8 @@ var bytecast = function() {
 			_session.reference.on('connection', function(connection) {
 				_handleConnection(connection, function() {
 					_setMessage('sending');
+					_listen(connection, _host.handleData);
+
 					connection.send({
 						file: file,
 						name: file.name,
@@ -87,6 +91,11 @@ var bytecast = function() {
 					});
 				});
 			});
+		},
+
+		// Alert user of status when data arrives from peer.
+		handleData: function(data) {
+			_setMessage(data);
 		}
 	};
 
@@ -97,27 +106,26 @@ var bytecast = function() {
 
 			_setMessage('connecting');
 			_handleConnection(connection, function() {
-				_peer.waitForData(connection);
+				_setMessage('receiving');
+				_listen(connection, _peer.handleData);
 			});
 		},
 
-		// Create link to stream data from host when available.
-		waitForData: function(connection) {
-			_setMessage('receiving');
+		// Receive data from host and create a URL when ready.
+		handleData: function(data) {
+			var file = data.file;
 
-			connection.on('data', function(data) {
-				var file = data.file;
+			if (file && file.constructor === ArrayBuffer) {
+				var dataView = new Uint8Array(file);
+				var dataBlob = new Blob([dataView], {type: data.type});
+				var url = window.URL.createObjectURL(dataBlob);
 
-				if (file && file.constructor === ArrayBuffer) {
-					var dataView = new Uint8Array(file);
-					var dataBlob = new Blob([dataView], {type: data.type});
-					var url = window.URL.createObjectURL(dataBlob);
+				_setMessage('file', {
+					url: url
+				});
 
-					_setMessage('file', {
-						url: url
-					});
-				}
-			});
+				_session.connection.send('success');
+			}
 		}
 	};
 
@@ -142,9 +150,12 @@ var bytecast = function() {
 	// Bind connection handler.
 	_handleConnection = function(connection, callback) {
 		connection.on('open', function() {
+			_session.connection = connection;
 			_session.peer = connection.peer;
 
 			_setMessage('established');
+
+			console.log(_session);
 
 			if(typeof callback === 'function') {
 				callback();
@@ -153,6 +164,15 @@ var bytecast = function() {
 
 		connection.on('error', function(err) {
 			_setMessage('errorConnecting');
+		});
+	};
+
+	// Listen for data over connection.
+	_listen = function(connection, callback) {
+		connection.on('data', function(data) {
+			if(typeof callback === 'function') {
+				callback(data);
+			}
 		});
 	};
 
