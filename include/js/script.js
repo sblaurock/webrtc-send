@@ -16,7 +16,8 @@ var bytecast = function() {
 			receiving: 'Receiving...<br /><img src="include/img/loader.gif" />',
 			file: 'File is ready.<br /><a target="_blank" href="{{url}}">Click here to download!</a>',
 			success: '<p class="success">File was sent successfully!</p>',
-			error: '<p class="error">A connection could not be established.</p>'
+			error: '<p class="error">A connection could not be established.</p>',
+			progress: '{{percentage}}%<br /><img src="include/img/loader.gif" />'
 		},
 		timeout: {
 			connectToHost: 3000
@@ -88,6 +89,7 @@ var bytecast = function() {
 				if(connection.label && connection.label === 'file') {
 					callback = function() {
 						_setMessage('sending');
+						_host.setProgress(connection, file.size);
 
 						connection.send({
 							file: file,
@@ -99,7 +101,6 @@ var bytecast = function() {
 				}
 
 				if(connection.label && connection.label === 'text') {
-					console.log('text connection established');
 					callback = function() {
 						_listen(connection, _handleText);
 					};
@@ -107,6 +108,40 @@ var bytecast = function() {
 
 				_handleConnection(connection, callback);
 			});
+		},
+
+		// Check file transfer progress and push updates to peer.
+		setProgress: function(connection, filesize) {
+			var bufferedAmount = 0;
+			var previous = 0;
+			var percentage = 1;
+
+			var progress = setInterval(function() {
+				bufferedAmount = connection.getBufferedAmount();
+				percentage = Math.floor(100 - ((bufferedAmount / filesize) * 100));
+
+				if(percentage > previous) {
+					previous = percentage;
+
+					_setMessage('progress', {
+						percentage: percentage
+					});
+
+					if(_session.textConnection !== null) {
+						_session.textConnection.send({
+							message: 'progress',
+							replacements: {
+								percentage: percentage
+							}
+						});
+					}
+				}
+
+				if(percentage === 100) {
+					clearInterval(progress);
+					_setMessage('success');
+				}
+			}, 50);
 		}
 	};
 
@@ -146,13 +181,17 @@ var bytecast = function() {
 				var dataBlob = new Blob([dataView], {type: data.type});
 				var url = window.URL.createObjectURL(dataBlob);
 
-				_setMessage('file', {
-					url: url
-				});
-
 				if(_session.textConnection !== null) {
-					_session.textConnection.send({
-						message: 'success'
+					_session.textConnection.on('close', function() {
+						_setMessage('file', {
+							url: url
+						});
+					});
+
+					_session.textConnection.close();
+				} else {
+					_setMessage('file', {
+						url: url
 					});
 				}
 			}
