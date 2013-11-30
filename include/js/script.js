@@ -27,7 +27,8 @@ var bytecast = function() {
 		id: '',
 		reference: null,
 		peer: null,
-		connection: null
+		fileConnection: null,
+		textConnection: null
 	};
 
 	var _host = {
@@ -81,24 +82,31 @@ var bytecast = function() {
 
 		// Listen for incoming connection and send file when established.
 		listenForPeer: function(file) {
+			var callback;
+
 			_session.reference.on('connection', function(connection) {
-				_handleConnection(connection, function() {
-					_setMessage('sending');
-					_listen(connection, _host.handleData);
+				if(connection.label && connection.label === 'file') {
+					callback = function() {
+						_setMessage('sending');
 
-					connection.send({
-						file: file,
-						name: file.name,
-						size: file.size,
-						type: file.type
-					});
-				});
+						connection.send({
+							file: file,
+							name: file.name,
+							size: file.size,
+							type: file.type
+						});
+					};
+				}
+
+				if(connection.label && connection.label === 'text') {
+					console.log('text connection established');
+					callback = function() {
+						_listen(connection, _handleText);
+					};
+				}
+
+				_handleConnection(connection, callback);
 			});
-		},
-
-		// Alert user of status when data arrives from peer.
-		handleData: function(data) {
-			_setMessage(data);
 		}
 	};
 
@@ -106,7 +114,8 @@ var bytecast = function() {
 		// Connect to host if we have a hash reference to their ID.
 		connectToHost: function(peerId) {
 			var timeout;
-			var connection = _session.reference.connect(peerId);
+			var fileConnection = _session.reference.connect(peerId, { label: 'file' });
+			var textConnection = _session.reference.connect(peerId, { label: 'text' });
 
 			_setMessage('connecting');
 
@@ -118,15 +127,18 @@ var bytecast = function() {
 				return;
 			}, _options.timeout.connectToHost);
 
-			_handleConnection(connection, function() {
+			_handleConnection(fileConnection, function() {
 				clearTimeout(timeout);
-				_setMessage('receiving');
-				_listen(connection, _peer.handleData);
+				_listen(fileConnection, _peer.handleFile);
+			});
+
+			_handleConnection(textConnection, function() {
+				_listen(textConnection, _handleText);
 			});
 		},
 
 		// Receive data from host and create a URL when ready.
-		handleData: function(data) {
+		handleFile: function(data) {
 			var file = data.file;
 
 			if (file && file.constructor === ArrayBuffer) {
@@ -138,7 +150,11 @@ var bytecast = function() {
 					url: url
 				});
 
-				_session.connection.send('success');
+				if(_session.textConnection !== null) {
+					_session.textConnection.send({
+						message: 'success'
+					});
+				}
 			}
 		}
 	};
@@ -164,10 +180,19 @@ var bytecast = function() {
 	// Bind connection handler.
 	_handleConnection = function(connection, callback) {
 		connection.on('open', function() {
-			_session.connection = connection;
-			_session.peer = connection.peer;
+			if(connection.label && connection.label === 'file') {
+				_session.fileConnection = connection;
 
-			_setMessage('established');
+				_setMessage('established');
+			}
+
+			if(connection.label && connection.label === 'text') {
+				_session.textConnection = connection;
+			}
+
+			if(_session.peer === null) {
+				_session.peer = connection.peer;
+			}
 
 			if(typeof callback === 'function') {
 				callback();
@@ -189,21 +214,21 @@ var bytecast = function() {
 	};
 
 	// Display a message to the user.
-	_setMessage = function(identifier, data) {
+	_setMessage = function(identifier, replacements) {
 		var message = _options.messages[identifier];
 
 		if(!message || typeof message !== 'string') {
 			return false;
 		}
 
-		if(data !== undefined && typeof data === 'object') {
+		if(replacements !== undefined && typeof replacements === 'object') {
 			var placeholders = message.match(/{{[\w]+}}/g) || [];
 			var current;
 			var replacement;
 
 			for(var i = 0, length = placeholders.length; i < length; i++) {
 				current = placeholders[i];
-				replacement = data[current.replace(/\W/g, '')];
+				replacement = replacements[current.replace(/\W/g, '')];
 
 				if(replacement) {
 					message = message.replace(current, replacement);
@@ -212,6 +237,13 @@ var bytecast = function() {
 		}
 
 		_options.dropArea.reference.html(message);
+	};
+
+	// Receive messages from host and update the UI of status.
+	_handleText = function(data) {
+		if(data && data.message) {
+			_setMessage(data.message, data.replacements);
+		}
 	};
 
 	// Public interface.
