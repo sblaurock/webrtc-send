@@ -39,3 +39,7 @@ p.lead {
 #drop.hover {
 	background: rgba(0, 0, 0, .25);
 }
+
+#url {
+	cursor: default;
+}
