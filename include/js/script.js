@@ -1,7 +1,6 @@
-var bytecast = function() {
+var dropsend = function() {
 	var _options = {
 		key: '4u478wggtkxzuxr',
-		clipboard: '/bytecast/include/clipboard.swf',
 		dropArea: {
 			reference: $('#drop'),
 			hoverClass: 'hover',
@@ -10,7 +9,7 @@ var bytecast = function() {
 		messages: {
 			drag: 'Drag a file here...',
 			initializing: 'Initializing session...',
-			ready: 'File is ready. Share this link:<br /><span data-clipboard-text="{{link}}" id="url">{{link}}</span>',
+			ready: 'File is ready. Share this link:<br /><span id="url">{{link}}</span>',
 			connecting: 'Connecting to peer...',
 			established: 'Connection established.',
 			sending: 'Sending...<br /><img src="include/img/loader.gif" />',
@@ -18,8 +17,7 @@ var bytecast = function() {
 			file: 'File is ready.<br /><a target="_blank" href="{{url}}">Click here to download!</a>',
 			success: '<p class="success">File was sent successfully!</p>',
 			error: '<p class="error">A connection could not be established.</p>',
-			progress: '{{percentage}}%<br /><img src="include/img/loader.gif" />',
-			copied: 'Copied to clipboard.'
+			progress: '{{percentage}}%<br /><img src="include/img/loader.gif" />'
 		},
 		timeout: {
 			connectToHost: 3000
@@ -66,21 +64,6 @@ var bytecast = function() {
 			_setMessage('drag');
 		},
 
-		// Handle the functionality around copy and paste.
-		setupClipboard: function() {
-			var clip = new ZeroClipboard($('#url'), {
-				moviePath: _options.clipboard
-			});
-
-			clip.on('load', function(client) {
-				client.on('complete', function(client, args) {
-					var element = $(this);
-
-					element.html(_options.messages.copied);
-				});
-			});
-		},
-
 		// Initiate a session when a file is dropped.
 		handleDrop: function(e) {
 			var dataTransfer = e.originalEvent.dataTransfer;
@@ -95,7 +78,6 @@ var bytecast = function() {
 				});
 
 				this.listenForPeer(file);
-				this.setupClipboard();
 			}
 		},
 
@@ -324,8 +306,8 @@ $(document).ready(function() {
 	var hash = window.location.hash;
 
 	if(hash && typeof hash === 'string' && hash.length > 0) {
-		bytecast.initiatePeer(hash.replace(/\W/g, ''));
+		dropsend.initiatePeer(hash.replace(/\W/g, ''));
 	} else {
-		bytecast.initiateHost();
+		dropsend.initiateHost();
 	}
 });
