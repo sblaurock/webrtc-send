@@ -1,6 +1,6 @@
 var dropsend = function($, document) {
 	var _options = {
-		key: '4u478wggtkxzuxr',
+		key: '48y8nbsocrf6r',
 		dropArea: {
 			reference: $('#drop'),
 			status: $('#status'),
@@ -9,18 +9,28 @@ var dropsend = function($, document) {
 				hover: 'hover'
 			},
 		},
-		messages: {
-			drop: 'Drop a file here...',
-			initializing: 'Initializing session...',
-			ready: 'File is ready. Share this link:<br /><span id="url">{{link}}</span>',
-			connecting: 'Connecting to peer...',
-			established: 'Connection established.',
-			sending: 'Sending...',
-			receiving: 'Receiving...',
-			file: 'File is ready.<br /><a target="_blank" href="{{url}}">Click here to download!</a>',
-			success: '<p class="success">File was sent successfully!</p>',
-			error: '<p class="error">A connection could not be established.</p>',
-			progress: '{{percentage}}%'
+		message: {
+			reference: $('#message'),
+			classes: {
+				open: 'open'
+			}
+		},
+		text: {
+			statuses: {
+				drop: 'Drop a file here...',
+				initializing: 'Initializing session...',
+				connecting: 'Connecting to peer...',
+				established: 'Connection established.',
+				sending: 'Sending...',
+				receiving: 'Receiving...',
+				success: '<p class="success">File successfully sent.</p>',
+				error: '<p class="error">Attempt to connect failed.</p>',
+				progress: '{{percentage}}%'
+			},
+			messages: {
+				ready: '<span class="glyphicon glyphicon-ok"></span>File is ready. Share this link: <span class="link">{{link}}</span>',
+				file: '<span class="glyphicon glyphicon-ok"></span>File is ready. <a target="_blank" href="{{url}}">Click here to download!</a>'
+			}
 		},
 		timeout: {
 			connectToHost: 3000
@@ -68,7 +78,7 @@ var dropsend = function($, document) {
 			};
 
 			_options.dropArea.reference.toggleClass(_options.dropArea.classes.ready);
-			_setStatus('drop');
+			_setText('status', 'drop');
 		},
 
 		// Initiate a session when a file is dropped.
@@ -80,9 +90,10 @@ var dropsend = function($, document) {
 
 				_session.file = file;
 
-				_setStatus('ready', {
+				_setText('message', 'ready', {
 					'link': document.URL + '#' + _session.id
 				});
+				_message.show();
 
 				this.listenForPeer(file);
 			}
@@ -95,8 +106,9 @@ var dropsend = function($, document) {
 			_session.reference.on('connection', function(connection) {
 				if(connection.label && connection.label === 'file') {
 					callback = function() {
-						_setStatus('sending');
+						_setText('status', 'sending');
 						_host.setProgress(connection, file.size);
+						_message.hide();
 
 						connection.send({
 							file: file,
@@ -130,7 +142,7 @@ var dropsend = function($, document) {
 				if(percentage > previous) {
 					previous = percentage;
 
-					_setStatus('progress', {
+					_setText('status', 'progress', {
 						percentage: percentage
 					});
 
@@ -146,7 +158,7 @@ var dropsend = function($, document) {
 
 				if(percentage === 100) {
 					clearInterval(progress);
-					_setStatus('success');
+					_setText('status', 'success');
 				}
 			}, 50);
 		}
@@ -159,11 +171,11 @@ var dropsend = function($, document) {
 			var fileConnection = _session.reference.connect(peerId, { label: 'file' });
 			var textConnection = _session.reference.connect(peerId, { label: 'text' });
 
-			_setStatus('connecting');
+			_setText('status', 'connecting');
 
 			// If we can't connect within defined time frame then message user and destroy session.
 			timeout = setTimeout(function() {
-				_setStatus('error');
+				_setText('status', 'error');
 				_session.reference.destroy();
 
 				return;
@@ -190,20 +202,36 @@ var dropsend = function($, document) {
 
 				if(_session.textConnection !== null) {
 					_session.textConnection.on('close', function() {
-						_setStatus('file', {
+						_setText('message', 'file', {
 							url: url
 						});
+						_message.show();
 					});
 
 					_session.textConnection.close();
 				} else {
-					_setStatus('file', {
+					_setText('message', 'file', {
 						url: url
 					});
+					_message.show();
 				}
 			}
 		}
 	};
+
+	var _message = {
+		toggle: function() {
+			_options.message.reference.toggleClass(_options.message.classes.open);
+		},
+
+		show: function() {
+			_options.message.reference.addClass(_options.message.classes.open);
+		},
+
+		hide: function() {
+			_options.message.reference.removeClass(_options.message.classes.open);
+		}
+	},
 
 	// Create a peer session.
 	_createSession = function(callback) {
@@ -211,7 +239,7 @@ var dropsend = function($, document) {
 			key: _options.key
 		});
 
-		_setStatus('initializing');
+		_setText('status', 'initializing');
 
 		session.on('open', function(id) {
 			_session.id = id;
@@ -229,7 +257,7 @@ var dropsend = function($, document) {
 			if(connection.label && connection.label === 'file') {
 				_session.fileConnection = connection;
 
-				_setStatus('established');
+				_setText('status', 'established');
 			}
 
 			if(connection.label && connection.label === 'text') {
@@ -246,7 +274,7 @@ var dropsend = function($, document) {
 		});
 
 		connection.on('error', function(err) {
-			_setStatus('error');
+			_setText('status', 'error');
 		});
 	};
 
@@ -260,15 +288,17 @@ var dropsend = function($, document) {
 	};
 
 	// Display a message to the user.
-	_setStatus = function(identifier, replacements) {
-		var message = _options.messages[identifier];
+	_setText = function(type, identifier, replacements) {
+		var type = type || 'status';
+		var namespace = (type === 'status' ? _options.text.statuses : _options.text.messages);
+		var text = namespace[identifier];
 
-		if(!message || typeof message !== 'string') {
+		if(!text || typeof text !== 'string') {
 			return false;
 		}
 
 		if(replacements !== undefined && typeof replacements === 'object') {
-			var placeholders = message.match(/{{[\w]+}}/g) || [];
+			var placeholders = text.match(/{{[\w]+}}/g) || [];
 			var current;
 			var replacement;
 
@@ -277,18 +307,18 @@ var dropsend = function($, document) {
 				replacement = replacements[current.replace(/\W/g, '')];
 
 				if(replacement) {
-					message = message.replace(current, replacement);
+					text = text.replace(current, replacement);
 				}
 			}
 		}
 
-		_options.dropArea.status.html(message);
-	};
+		type === 'status' ? _options.dropArea.status.html(text) : _options.message.reference.html(text);
+	}
 
 	// Receive messages from host and update the UI of status.
 	_handleText = function(data) {
 		if(data && data.message) {
-			_setStatus(data.message, data.replacements);
+			_setText('status', data.message, data.replacements);
 		}
 	};
 

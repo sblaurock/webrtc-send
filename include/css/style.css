@@ -35,11 +35,15 @@ h2 {
 	font-size: 36px;
 	text-align: center;
 }
+.glyphicon {
+	margin-right: 10px;
+	color: #298fc9;
+}
 .error {
 	color: #a30000;
 }
-.success {
-	color: #3bca3b;
+.success, .link {
+	color: #298fc9;
 }
 #drop {
 	width: 320px;
@@ -59,9 +63,32 @@ h2 {
 	background: rgba(0, 0, 0, .4);
 	border: 5px dashed rgba(255, 255, 255, .6);
 	-webkit-transition: background .5s ease-in-out, border .5s ease-in-out;
+	transition: background .5s ease-in-out, border .5s ease-in-out;
 }
 #drop.hover {
-	background: rgba(255, 255, 255, .01);
-	border: 5px dashed rgba(255, 255, 255, .9);
+	border: 5px dashed rgba(41, 143, 201, .8);
+	-webkit-transition: border .3s ease-in-out;
 	-webkit-animation: pulse 2s infinite ease-in-out;
+}
+#status {
+	color: #666;
+}
+#message {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	overflow: hidden;
+	width: 100%;
+	background: rgba(0, 0, 0, .9);
+	line-height: 68px;
+	height: 0;
+	font-size: 16px;
+	color: #eee;
+	box-shadow: 0 -3px 5px rgba(0,0,0,0.5);
+	border-top: 1px solid #0c0c0c;
+	-webkit-transition: height .3s ease-in-out;
+	transition: height .3s ease-in-out;
+}
+#message.open {
+	height: 70px;
 }
