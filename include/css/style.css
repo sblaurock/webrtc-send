@@ -1,45 +1,67 @@
-body {
-	background: url('../img/background.jpg');
+/* Fonts */
+@import url(http://fonts.googleapis.com/css?family=Raleway);
+
+/* Animations */
+@-webkit-keyframes pulse {
+	0% {
+		-webkit-box-shadow: inset 0 0 0 0 rgba(255, 255, 255, .1);
+	}
+	50% {
+		-webkit-box-shadow: inset 0 0 50px 0 rgba(80, 158, 223, .2);
+	}
+	100% {
+		-webkit-box-shadow: inset 0 0 0 0 rgba(255, 255, 255, .1);
+	}
 }
 
+/* Page Styles */
+html, body {
+	width: 100%;
+	height: 100%;
+}
+body {
+	background: url('../img/background.png');
+}
+body, h1, h2 {
+	font-family: 'Raleway', sans-serif;
+}
 h1 {
-	font-size: 60px;
-	color: #eee;
+	font-size: 70px;
+	color: #ddd;
 	text-align: center;
 }
-
-p.lead {
-	color: #eee;
+h2 {
+	color: #999;
 	font-size: 36px;
 	text-align: center;
 }
-
 .error {
 	color: #a30000;
 }
-
 .success {
 	color: #3bca3b;
 }
-
 #drop {
-	width: 600px;
-	height: 350px;
-	border-radius: 15px;
-	border: 5px dashed #333;
-	margin: 50px auto;
-	background: rgba(0, 0, 0, .15);
-	vertical-align: middle;
-	text-align: center;
-	padding: 15px;
-	color: #555;
-	font-size: 24px;
+	width: 320px;
+	height: 320px;
+	border: 5px dashed rgba(0, 0, 0, 0);
+	border-radius: 50%;
+	margin: auto;
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	line-height: 305px;
+	font-size: 22px;
 }
-
+#drop.ready {
+	background: rgba(0, 0, 0, .4);
+	border: 5px dashed rgba(255, 255, 255, .6);
+	-webkit-transition: background .5s ease-in-out, border .5s ease-in-out;
+}
 #drop.hover {
-	background: rgba(0, 0, 0, .25);
-}
-
-#url {
-	cursor: default;
+	background: rgba(255, 255, 255, .01);
+	border: 5px dashed rgba(255, 255, 255, .9);
+	-webkit-animation: pulse 2s infinite ease-in-out;
 }

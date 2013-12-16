@@ -1,7 +1,7 @@
 - Set up TURN server.
 - Secure a more reliable hosting platform.
 	- Configure internal PeerServer cloud or license service.
-+ Decide on a better name.
+- Decide on a better name.
 	- Secure domain and Twitter handle.
 - File transfer progress indicator.
 - UI improvements.

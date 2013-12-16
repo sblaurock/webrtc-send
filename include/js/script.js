@@ -1,23 +1,26 @@
-var dropsend = function() {
+var dropsend = function($, document) {
 	var _options = {
 		key: '4u478wggtkxzuxr',
 		dropArea: {
 			reference: $('#drop'),
-			hoverClass: 'hover',
-			activeClass: 'active'
+			status: $('#status'),
+			classes: {
+				ready: 'ready',
+				hover: 'hover'
+			},
 		},
 		messages: {
-			drag: 'Drag a file here...',
+			drop: 'Drop a file here...',
 			initializing: 'Initializing session...',
 			ready: 'File is ready. Share this link:<br /><span id="url">{{link}}</span>',
 			connecting: 'Connecting to peer...',
 			established: 'Connection established.',
-			sending: 'Sending...<br /><img src="include/img/loader.gif" />',
-			receiving: 'Receiving...<br /><img src="include/img/loader.gif" />',
+			sending: 'Sending...',
+			receiving: 'Receiving...',
 			file: 'File is ready.<br /><a target="_blank" href="{{url}}">Click here to download!</a>',
 			success: '<p class="success">File was sent successfully!</p>',
 			error: '<p class="error">A connection could not be established.</p>',
-			progress: '{{percentage}}%<br /><img src="include/img/loader.gif" />'
+			progress: '{{percentage}}%'
 		},
 		timeout: {
 			connectToHost: 3000
@@ -35,9 +38,11 @@ var dropsend = function() {
 	var _host = {
 		// Bind events around drag and drop functionality.
 		bindEvents: function() {
-			var toggleDropHover = function(e) {
-				_options.dropArea.reference.toggleClass(_options.dropArea.hoverClass);
-				stopEvent(e);
+			var body = $(document.body);
+			var hoverActive = 0;
+
+			var toggleHover = function(e) {
+				_options.dropArea.reference.toggleClass(_options.dropArea.classes.hover);
 			};
 
 			var stopEvent = function(e) {
@@ -45,11 +50,12 @@ var dropsend = function() {
 				e.stopPropagation();
 			};
 
-			_options.dropArea.reference.on('dragover', stopEvent);
-			_options.dropArea.reference.on('dragenter', toggleDropHover);
-			_options.dropArea.reference.on('dragleave', toggleDropHover);
-			_options.dropArea.reference.on('drop', function(e) {
-				toggleDropHover(e);
+			body.on('dragover', stopEvent);
+			body.on('dragenter', toggleHover);
+			body.on('dragleave', toggleHover);
+			body.on('drop', function(e) {
+				toggleHover(e);
+				stopEvent(e);
 				_host.handleDrop(e);
 			});
 
@@ -61,7 +67,8 @@ var dropsend = function() {
 				}
 			};
 
-			_setMessage('drag');
+			_options.dropArea.reference.toggleClass(_options.dropArea.classes.ready);
+			_setStatus('drop');
 		},
 
 		// Initiate a session when a file is dropped.
@@ -73,7 +80,7 @@ var dropsend = function() {
 
 				_session.file = file;
 
-				_setMessage('ready', {
+				_setStatus('ready', {
 					'link': document.URL + '#' + _session.id
 				});
 
@@ -88,7 +95,7 @@ var dropsend = function() {
 			_session.reference.on('connection', function(connection) {
 				if(connection.label && connection.label === 'file') {
 					callback = function() {
-						_setMessage('sending');
+						_setStatus('sending');
 						_host.setProgress(connection, file.size);
 
 						connection.send({
@@ -123,7 +130,7 @@ var dropsend = function() {
 				if(percentage > previous) {
 					previous = percentage;
 
-					_setMessage('progress', {
+					_setStatus('progress', {
 						percentage: percentage
 					});
 
@@ -139,7 +146,7 @@ var dropsend = function() {
 
 				if(percentage === 100) {
 					clearInterval(progress);
-					_setMessage('success');
+					_setStatus('success');
 				}
 			}, 50);
 		}
@@ -152,11 +159,11 @@ var dropsend = function() {
 			var fileConnection = _session.reference.connect(peerId, { label: 'file' });
 			var textConnection = _session.reference.connect(peerId, { label: 'text' });
 
-			_setMessage('connecting');
+			_setStatus('connecting');
 
 			// If we can't connect within defined time frame then message user and destroy session.
 			timeout = setTimeout(function() {
-				_setMessage('error');
+				_setStatus('error');
 				_session.reference.destroy();
 
 				return;
@@ -183,14 +190,14 @@ var dropsend = function() {
 
 				if(_session.textConnection !== null) {
 					_session.textConnection.on('close', function() {
-						_setMessage('file', {
+						_setStatus('file', {
 							url: url
 						});
 					});
 
 					_session.textConnection.close();
 				} else {
-					_setMessage('file', {
+					_setStatus('file', {
 						url: url
 					});
 				}
@@ -204,7 +211,7 @@ var dropsend = function() {
 			key: _options.key
 		});
 
-		_setMessage('initializing');
+		_setStatus('initializing');
 
 		session.on('open', function(id) {
 			_session.id = id;
@@ -222,7 +229,7 @@ var dropsend = function() {
 			if(connection.label && connection.label === 'file') {
 				_session.fileConnection = connection;
 
-				_setMessage('established');
+				_setStatus('established');
 			}
 
 			if(connection.label && connection.label === 'text') {
@@ -239,7 +246,7 @@ var dropsend = function() {
 		});
 
 		connection.on('error', function(err) {
-			_setMessage('error');
+			_setStatus('error');
 		});
 	};
 
@@ -253,7 +260,7 @@ var dropsend = function() {
 	};
 
 	// Display a message to the user.
-	_setMessage = function(identifier, replacements) {
+	_setStatus = function(identifier, replacements) {
 		var message = _options.messages[identifier];
 
 		if(!message || typeof message !== 'string') {
@@ -275,13 +282,13 @@ var dropsend = function() {
 			}
 		}
 
-		_options.dropArea.reference.html(message);
+		_options.dropArea.status.html(message);
 	};
 
 	// Receive messages from host and update the UI of status.
 	_handleText = function(data) {
 		if(data && data.message) {
-			_setMessage(data.message, data.replacements);
+			_setStatus(data.message, data.replacements);
 		}
 	};
 
@@ -299,7 +306,7 @@ var dropsend = function() {
 			});
 		}
 	};
-}();
+}(jQuery, document);
 
 // Kick out the jams.
 $(document).ready(function() {
