@@ -136,7 +136,7 @@ var dropsend = function($, document) {
 			var percentage = 1;
 
 			var progress = setInterval(function() {
-				bufferedAmount = connection.getBufferedAmount();
+				bufferedAmount = connection.dataChannel.bufferedAmount;
 				percentage = Math.floor(100 - ((bufferedAmount / filesize) * 100));
 
 				if(percentage > previous) {
