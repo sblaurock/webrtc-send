@@ -1,8 +1,8 @@
 - Set up TURN server.
 - Secure a more reliable hosting platform.
 	- Configure internal PeerServer cloud or license service.
-- Decide on a better name.
-	- Secure domain and Twitter handle.
++ Decide on a better name.
+	+ Secure domain and Twitter handle.
 - File transfer progress indicator.
 - UI improvements.
 	- File type display.
@@ -15,3 +15,4 @@
 	- Ability to reserve custom URLs?
 - Encryption & SSL.
 - Support for large files.
+- Develop Google Chrome extension.

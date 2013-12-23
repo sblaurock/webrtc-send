@@ -1,4 +1,4 @@
-var dropsend = function($, document) {
+var linkify = function($, document) {
 	var _options = {
 		key: '48y8nbsocrf6r',
 		dropArea: {
@@ -343,8 +343,8 @@ $(document).ready(function() {
 	var hash = window.location.hash;
 
 	if(hash && typeof hash === 'string' && hash.length > 0) {
-		dropsend.initiatePeer(hash.replace(/\W/g, ''));
+		linkify.initiatePeer(hash.replace(/\W/g, ''));
 	} else {
-		dropsend.initiateHost();
+		linkify.initiateHost();
 	}
 });

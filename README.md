@@ -1,4 +1,4 @@
-dropsend
+linkify
 ========
 P2P file transfer over WebRTC.
 
