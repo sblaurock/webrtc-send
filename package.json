@@ -19,5 +19,8 @@
   "dependencies": {
     "peer": "~0.2.1",
     "express": "~3.4.7"
+  },
+  "engines": {
+    "node": "0.10.x"
   }
 }

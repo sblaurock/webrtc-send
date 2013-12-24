@@ -1,6 +1,6 @@
 var linkify = function($, document) {
 	var _options = {
-		key: '48y8nbsocrf6r',
+		port: '9000',
 		dropArea: {
 			reference: $('#drop'),
 			status: $('#status'),
@@ -231,12 +231,13 @@ var linkify = function($, document) {
 		hide: function() {
 			_options.message.reference.removeClass(_options.message.classes.open);
 		}
-	},
+	};
 
 	// Create a peer session.
-	_createSession = function(callback) {
-		var session = new Peer({
-			key: _options.key
+	var _createSession = function(callback) {
+		var session = new Peer(util.randomToken(), {
+			host: 'localhost',
+			port: _options.port
 		});
 
 		_setText('status', 'initializing');
@@ -252,7 +253,7 @@ var linkify = function($, document) {
 	};
 
 	// Bind connection handler.
-	_handleConnection = function(connection, callback) {
+	var _handleConnection = function(connection, callback) {
 		connection.on('open', function() {
 			if(connection.label && connection.label === 'file') {
 				_session.fileConnection = connection;
@@ -279,7 +280,7 @@ var linkify = function($, document) {
 	};
 
 	// Listen for data over connection.
-	_listen = function(connection, callback) {
+	var _listen = function(connection, callback) {
 		connection.on('data', function(data) {
 			if(typeof callback === 'function') {
 				callback(data);
@@ -288,7 +289,7 @@ var linkify = function($, document) {
 	};
 
 	// Display a message to the user.
-	_setText = function(type, identifier, replacements) {
+	var _setText = function(type, identifier, replacements) {
 		var type = type || 'status';
 		var namespace = (type === 'status' ? _options.text.statuses : _options.text.messages);
 		var text = namespace[identifier];
@@ -313,10 +314,10 @@ var linkify = function($, document) {
 		}
 
 		type === 'status' ? _options.dropArea.status.html(text) : _options.message.reference.html(text);
-	}
+	};
 
 	// Receive messages from host and update the UI of status.
-	_handleText = function(data) {
+	var _handleText = function(data) {
 		if(data && data.message) {
 			_setText('status', data.message, data.replacements);
 		}
