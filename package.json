@@ -1,0 +1,23 @@
+{
+  "name": "linkify",
+  "version": "0.0.0",
+  "description": "Simple peer to peer file transfer.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/sblaurock/linkify.git"
+  },
+  "author": "@sblaurock",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sblaurock/linkify/issues"
+  },
+  "homepage": "https://github.com/sblaurock/linkify",
+  "dependencies": {
+    "peer": "~0.2.1",
+    "express": "~3.4.7"
+  }
+}
