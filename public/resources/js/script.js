@@ -1,6 +1,8 @@
 var linkify = function($, document) {
 	var _options = {
-		port: '9000',
+		host: 'linkify-server.herokuapp.com',
+		port: '443',
+		secure: true,
 		config: {'iceServers': [
 			{ url: 'stun:stun.l.google.com:19302' },
 			{ url: 'stun:stun1.l.google.com:19302' },
@@ -243,8 +245,9 @@ var linkify = function($, document) {
 	// Create a peer session.
 	var _createSession = function(callback) {
 		var session = new Peer(util.randomToken(), {
-			host: 'localhost',
+			host: _options.host,
 			port: _options.port,
+			secure: _options.secure,
 			config: _options.config
 		});
 
