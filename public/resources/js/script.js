@@ -1,6 +1,13 @@
 var linkify = function($, document) {
 	var _options = {
 		port: '9000',
+		config: {'iceServers': [
+			{ url: 'stun:stun.l.google.com:19302' },
+			{ url: 'stun:stun1.l.google.com:19302' },
+			{ url: 'stun:stun2.l.google.com:19302' },
+			{ url: 'stun:stun3.l.google.com:19302' },
+			{ url: 'stun:stun4.l.google.com:19302' }
+		]},
 		dropArea: {
 			reference: $('#drop'),
 			status: $('#status'),
@@ -237,7 +244,8 @@ var linkify = function($, document) {
 	var _createSession = function(callback) {
 		var session = new Peer(util.randomToken(), {
 			host: 'localhost',
-			port: _options.port
+			port: _options.port,
+			config: _options.config
 		});
 
 		_setText('status', 'initializing');
