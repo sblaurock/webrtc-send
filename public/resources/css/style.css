@@ -2,15 +2,12 @@
 @import url(https://fonts.googleapis.com/css?family=Raleway);
 
 /* Animations */
-@-webkit-keyframes pulse {
-	0% {
-		-webkit-box-shadow: inset 0 0 0 0 rgba(255, 255, 255, .1);
+@-webkit-keyframes spin {
+	from {
+		-webkit-transform: rotate(0deg);
 	}
-	50% {
-		-webkit-box-shadow: inset 0 0 50px 0 rgba(80, 158, 223, .2);
-	}
-	100% {
-		-webkit-box-shadow: inset 0 0 0 0 rgba(255, 255, 255, .1);
+	to {
+		-webkit-transform: rotate(360deg);
 	}
 }
 
@@ -26,14 +23,22 @@ body, h1, h2 {
 	font-family: 'Raleway', sans-serif;
 }
 h1 {
-	font-size: 70px;
-	color: #ddd;
-	text-align: center;
+	font-size: 58px;
+	color: #111;
+	font-weight: bold;
+}
+h1 span {
+	color: #ccc;
 }
 h2 {
-	color: #999;
-	font-size: 36px;
-	text-align: center;
+	color: #555;
+	font-size: 27px;
+	margin-top: 0px;
+	padding: 0 0 10px 0;
+	line-height: 80%;
+}
+.container {
+	width: 100%;
 }
 .glyphicon {
 	margin-right: 10px;
@@ -45,33 +50,55 @@ h2 {
 .success, .link {
 	color: #298fc9;
 }
+#header {
+	margin: 0 0 0 13px;
+}
 #drop {
-	width: 320px;
-	height: 320px;
-	border: 5px dashed rgba(0, 0, 0, 0);
-	border-radius: 50%;
-	margin: auto;
+	width: 363px;
+	height: 363px;
 	position: absolute;
+	margin: auto;
 	top: 0;
 	left: 0;
 	bottom: 0;
 	right: 0;
-	line-height: 305px;
-	font-size: 22px;
+	border: 5px dashed #ccc;
+	padding: 10px;
+	border-radius: 50%;
+	opacity: 0;
+}
+#drop div {
+	border-radius: 50%;
+	width: 100%;
+	height: 100%;
+	display: table;
+	background: rgba(0, 0, 0, .8);
+	-webkit-transition: background-color .2s ease-in-out;
+	transition: background-color .2s ease-in-out;
 }
 #drop.ready {
-	background: rgba(0, 0, 0, .4);
-	border: 5px dashed rgba(255, 255, 255, .6);
-	-webkit-transition: background .5s ease-in-out, border .5s ease-in-out;
-	transition: background .5s ease-in-out, border .5s ease-in-out;
+	opacity: 1;
+	-webkit-transition: opacity .3s ease-in-out, border-color .2s ease-in-out;
+	transition: opacity .3s ease-in-out, border-color .2s ease-in-out;
 }
 #drop.hover {
-	border: 5px dashed rgba(41, 143, 201, .8);
-	-webkit-transition: border .3s ease-in-out;
-	-webkit-animation: pulse 2s infinite ease-in-out;
+	-webkit-animation: spin 10s linear infinite;
+	animation: spin 10s linear infinite;
+	border-color: #aaa;
+}
+#drop.hover div {
+	background: rgba(0, 0, 0, .9);
+}
+#drop.hover #status {
+	-webkit-animation: spin 10s reverse linear infinite;
+	animation: spin 10s reverse linear infinite;
 }
 #status {
-	color: #666;
+	font-size: 22px;
+	color: #eee;
+	display: table-cell;
+	vertical-align: middle;
+	text-align: center;
 }
 #message {
 	position: absolute;

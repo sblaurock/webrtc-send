@@ -42,7 +42,7 @@ var linkify = function($, document) {
 			}
 		},
 		timeout: {
-			connectToHost: 3000
+			connectToHost: 10000
 		}
 	};
 
@@ -58,10 +58,16 @@ var linkify = function($, document) {
 		// Bind events around drag and drop functionality.
 		bindEvents: function() {
 			var body = $(document.body);
-			var hoverActive = 0;
+			var hoverActive = false;
 
 			var toggleHover = function(e) {
-				_options.dropArea.reference.toggleClass(_options.dropArea.classes.hover);
+				if(hoverActive) {
+					_options.dropArea.reference.removeClass(_options.dropArea.classes.hover);
+				} else {
+					_options.dropArea.reference.addClass(_options.dropArea.classes.hover);
+				}
+
+				hoverActive = !hoverActive;
 			};
 
 			var stopEvent = function(e) {
