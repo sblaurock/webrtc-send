@@ -50,10 +50,19 @@ h2 {
 .success, .link {
 	color: #298fc9;
 }
+.invisible {
+	opacity: 0;
+}
+#droparea {
+	width: 100%;
+	height: 100%;
+	z-index: 2;
+	position: absolute;
+}
 #header {
 	margin: 0 0 0 13px;
 }
-#drop {
+#status {
 	width: 363px;
 	height: 363px;
 	position: absolute;
@@ -62,43 +71,50 @@ h2 {
 	left: 0;
 	bottom: 0;
 	right: 0;
-	border: 5px dashed #ccc;
+	border: 5px dashed rgba(0, 0, 0, 0);
 	padding: 10px;
 	border-radius: 50%;
-	opacity: 0;
 }
-#drop div {
-	border-radius: 50%;
+#status div {
 	width: 100%;
 	height: 100%;
+	border-radius: 50%;
 	display: table;
+	background-color: rgba(0, 0, 0, 0);
+}
+#status.ready {
+	border-color: #ccc;
+	-webkit-transition: border-color .3s ease-in-out;
+	transition: border-color .3s ease-in-out;
+}
+#status.ready div {
 	background: rgba(0, 0, 0, .8);
-	-webkit-transition: background-color .2s ease-in-out;
-	transition: background-color .2s ease-in-out;
+	-webkit-transition: background-color .5s ease-in-out;
+	transition: background-color .5s ease-in-out;
 }
-#drop.ready {
-	opacity: 1;
-	-webkit-transition: opacity .3s ease-in-out, border-color .2s ease-in-out;
-	transition: opacity .3s ease-in-out, border-color .2s ease-in-out;
+#status.ready #status-text {
+	color: #eee;
 }
-#drop.hover {
+#status.hover {
+	border-color: #aaa;
 	-webkit-animation: spin 10s linear infinite;
 	animation: spin 10s linear infinite;
-	border-color: #aaa;
 }
-#drop.hover div {
+#status.hover div {
 	background: rgba(0, 0, 0, .9);
 }
-#drop.hover #status {
+#status.hover #status-text {
 	-webkit-animation: spin 10s reverse linear infinite;
 	animation: spin 10s reverse linear infinite;
 }
-#status {
+#status-text {
 	font-size: 22px;
-	color: #eee;
+	color: #666;
 	display: table-cell;
 	vertical-align: middle;
 	text-align: center;
+	-webkit-transition: opacity .1s ease-in-out;
+	transition: opacity .1s ease-in-out;
 }
 #message {
 	position: absolute;

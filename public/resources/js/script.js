@@ -11,12 +11,15 @@ var linkify = function($, document) {
 			{ url: 'stun:stun4.l.google.com:19302' }
 		]},
 		dropArea: {
-			reference: $('#drop'),
-			status: $('#status'),
+			reference: $('#droparea'),
+		},
+		status: {
+			reference: $('#status'),
+			text: $('#status-text'),
 			classes: {
 				ready: 'ready',
 				hover: 'hover'
-			},
+			}
 		},
 		message: {
 			reference: $('#message'),
@@ -25,9 +28,12 @@ var linkify = function($, document) {
 			}
 		},
 		text: {
+			fadeDuration: 100,
+			fadeClass: 'invisible',
 			statuses: {
-				drop: 'Drop a file here...',
-				initializing: 'Initializing session...',
+				drag: 'Drag a file here...',
+				drop: 'Awesome, now drop it.',
+				initializing: 'Loading...',
 				connecting: 'Connecting to peer...',
 				established: 'Connection established.',
 				sending: 'Sending...',
@@ -57,14 +63,16 @@ var linkify = function($, document) {
 	var _host = {
 		// Bind events around drag and drop functionality.
 		bindEvents: function() {
-			var body = $(document.body);
+			var dropArea = _options.dropArea.reference;
 			var hoverActive = false;
 
 			var toggleHover = function(e) {
 				if(hoverActive) {
-					_options.dropArea.reference.removeClass(_options.dropArea.classes.hover);
+					_options.status.reference.removeClass(_options.status.classes.hover);
+					_setText('status', 'drag');
 				} else {
-					_options.dropArea.reference.addClass(_options.dropArea.classes.hover);
+					_options.status.reference.addClass(_options.status.classes.hover);
+					_setText('status', 'drop');
 				}
 
 				hoverActive = !hoverActive;
@@ -75,12 +83,13 @@ var linkify = function($, document) {
 				e.stopPropagation();
 			};
 
-			body.on('dragover', stopEvent);
-			body.on('dragenter', toggleHover);
-			body.on('dragleave', toggleHover);
-			body.on('drop', function(e) {
+			dropArea.on('dragover', stopEvent);
+			dropArea.on('dragenter', toggleHover);
+			dropArea.on('dragleave', toggleHover);
+			dropArea.on('drop', function(e) {
 				toggleHover(e);
 				stopEvent(e);
+				dropArea.remove();
 				_host.handleDrop(e);
 			});
 
@@ -92,8 +101,8 @@ var linkify = function($, document) {
 				}
 			};
 
-			_options.dropArea.reference.toggleClass(_options.dropArea.classes.ready);
-			_setText('status', 'drop');
+			_options.status.reference.toggleClass(_options.status.classes.ready);
+			_setText('status', 'drag');
 		},
 
 		// Initiate a session when a file is dropped.
@@ -221,6 +230,7 @@ var linkify = function($, document) {
 							url: url
 						});
 						_message.show();
+						_options.dropArea.reference.remove();
 					});
 
 					_session.textConnection.close();
@@ -310,6 +320,7 @@ var linkify = function($, document) {
 		var type = type || 'status';
 		var namespace = (type === 'status' ? _options.text.statuses : _options.text.messages);
 		var text = namespace[identifier];
+		var container;
 
 		if(!text || typeof text !== 'string') {
 			return false;
@@ -330,7 +341,14 @@ var linkify = function($, document) {
 			}
 		}
 
-		type === 'status' ? _options.dropArea.status.html(text) : _options.message.reference.html(text);
+		container = (type === 'status' ? _options.status.text : _options.message.reference);
+
+		container.addClass(_options.text.fadeClass);
+
+		setTimeout(function() {
+			container.html(text);
+			container.removeClass(_options.text.fadeClass);
+		}, _options.text.fadeDuration);
 	};
 
 	// Receive messages from host and update the UI of status.
