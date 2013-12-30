@@ -15,14 +15,16 @@ var linkify = function($, document) {
 		},
 		status: {
 			reference: $('#status'),
-			text: $('#text'),
+			text: $('#status-text'),
 			classes: {
 				ready: 'ready',
-				hover: 'hover'
+				hover: 'hover',
+				waiting: 'waiting'
 			}
 		},
 		message: {
 			reference: $('#message'),
+			text: $('#message-text'),
 			classes: {
 				open: 'open'
 			}
@@ -33,6 +35,7 @@ var linkify = function($, document) {
 			statuses: {
 				drag: 'Drag a file here...',
 				drop: 'Awesome, now drop it.',
+				waiting: 'Waiting for peer...',
 				initializing: 'Loading...',
 				connecting: 'Connecting to peer...',
 				established: 'Connection established.',
@@ -65,10 +68,17 @@ var linkify = function($, document) {
 		bindEvents: function() {
 			var dropArea = _options.dropArea.reference;
 			var hoverActive = false;
+			var previousEvent;
+			var body = $('body');
 
 			var toggleHover = function(e) {
+				// Bug: Firefox sometimes fires 'dragenter' twice (mzl.la/19VyMRn).
+				if(e.type === previousEvent) {
+					return false;
+				}
+
 				stopEvent(e);
-				
+
 				if(hoverActive) {
 					_options.status.reference.removeClass(_options.status.classes.hover);
 					_setText('status', 'drag');
@@ -77,6 +87,7 @@ var linkify = function($, document) {
 					_setText('status', 'drop');
 				}
 
+				previousEvent = e.type;
 				hoverActive = !hoverActive;
 			};
 
@@ -85,12 +96,15 @@ var linkify = function($, document) {
 				e.stopPropagation();
 			};
 
+			body.on('dragover', stopEvent);
+			body.on('dragenter', stopEvent);
+			body.on('dragleave', stopEvent);
+			body.on('drop', stopEvent);
 			dropArea.on('dragover', stopEvent);
 			dropArea.on('dragenter', toggleHover);
 			dropArea.on('dragleave', toggleHover);
 			dropArea.on('drop', function(e) {
 				toggleHover(e);
-				stopEvent(e);
 				dropArea.remove();
 				_host.handleDrop(e);
 			});
@@ -116,10 +130,12 @@ var linkify = function($, document) {
 
 				_session.file = file;
 
+				_setText('status', 'waiting');
 				_setText('message', 'ready', {
 					'link': document.URL + '#' + _session.id
 				});
 				_message.show();
+				_options.status.reference.addClass(_options.status.classes.waiting);
 
 				this.listenForPeer(file);
 			}
@@ -232,7 +248,6 @@ var linkify = function($, document) {
 							url: url
 						});
 						_message.show();
-						_options.dropArea.reference.remove();
 					});
 
 					_session.textConnection.close();
@@ -321,8 +336,8 @@ var linkify = function($, document) {
 	var _setText = function(type, identifier, replacements) {
 		var type = type || 'status';
 		var namespace = (type === 'status' ? _options.text.statuses : _options.text.messages);
+		var container = (type === 'status' ? _options.status.text : _options.message.text);
 		var text = namespace[identifier];
-		var container;
 
 		if(!text || typeof text !== 'string') {
 			return false;
@@ -343,10 +358,7 @@ var linkify = function($, document) {
 			}
 		}
 
-		container = (type === 'status' ? _options.status.text : _options.message.reference);
-
 		container.addClass(_options.text.fadeClass);
-
 		setTimeout(function() {
 			container.html(text);
 			container.removeClass(_options.text.fadeClass);
@@ -370,6 +382,7 @@ var linkify = function($, document) {
 
 		initiatePeer: function(peerId) {
 			_createSession(function(id, session) {
+				_options.dropArea.reference.remove();
 				_peer.connectToHost(peerId);
 			});
 		}

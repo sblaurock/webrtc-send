@@ -83,7 +83,7 @@ h2 {
 	-webkit-transition: border-color .3s ease-in-out;
 	transition: border-color .3s ease-in-out;
 }
-#status.hover {
+#status.hover, #status.waiting {
 	border-color: #aaa;
 	-webkit-animation: spin 10s linear infinite;
 	animation: spin 10s linear infinite;
@@ -103,19 +103,17 @@ h2 {
 #status.hover div {
 	background: rgba(0, 0, 0, .9);
 }
-#status #text {
+#status #status-text {
 	font-size: 22px;
 	color: #666;
 	display: table-cell;
 	vertical-align: middle;
 	text-align: center;
-	-webkit-transition: opacity .15s ease-in-out;
-	transition: opacity .15s ease-in-out;
 }
-#status.ready #text {
+#status.ready #status-text {
 	color: #eee;
 }
-#status.hover #text {
+#status.hover #status-text, #status.waiting #status-text {
 	-webkit-animation: spin 10s reverse linear infinite;
 	animation: spin 10s reverse linear infinite;
 }
@@ -123,16 +121,24 @@ h2 {
 	position: absolute;
 	bottom: 0;
 	width: 100%;
-	background: rgba(0, 0, 0, .9);
-	line-height: 70px;
+	background: rgba(0, 0, 0, .8);
 	height: 0;
-	font-size: 16px;
-	color: #eee;
-	text-align: center;
 	box-shadow: 0 -3px 5px rgba(0,0,0,0.3);
+	display: table;
 	-webkit-transition: height .3s ease-in-out;
 	transition: height .3s ease-in-out;
 }
+#message #message-text {
+	font-size: 16px;
+	color: #eee;
+	text-align: center;
+	display: table-cell;
+	vertical-align: middle;
+}
 #message.open {
 	height: 70px;
+}
+#status #status-text, #message #message-text {
+	-webkit-transition: opacity .15s ease-in-out;
+	transition: opacity .15s ease-in-out;
 }
