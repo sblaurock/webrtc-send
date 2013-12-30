@@ -25,6 +25,12 @@ body {
 body, h1, h2 {
 	font-family: 'Raleway', sans-serif;
 }
+a {
+	text-decoration: none;
+}
+a:hover {
+	text-decoration: underline;
+}
 h1, h2 {
 	font-weight: 500;
 	margin: 0;
@@ -123,8 +129,8 @@ h2 {
 	width: 100%;
 	background: rgba(0, 0, 0, .8);
 	height: 0;
+	overflow: hidden;
 	box-shadow: 0 -3px 5px rgba(0,0,0,0.3);
-	display: table;
 	-webkit-transition: height .3s ease-in-out;
 	transition: height .3s ease-in-out;
 }
@@ -132,8 +138,9 @@ h2 {
 	font-size: 16px;
 	color: #eee;
 	text-align: center;
-	display: table-cell;
-	vertical-align: middle;
+	width: 100%;
+	display: block;
+	margin: 26px 0 0 0;
 }
 #message.open {
 	height: 70px;

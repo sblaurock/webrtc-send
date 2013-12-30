@@ -46,12 +46,17 @@ var linkify = function($, document) {
 				progress: '{{percentage}}%'
 			},
 			messages: {
-				ready: '<span class="icon">&#10004;</span>File is ready. Share this link: <span class="link">{{link}}</span>',
-				file: '<span class="icon">&#10004;</span>File is ready. <a target="_blank" href="{{url}}">Click here to download!</a>'
+				ready: '<span class="icon">&#10004;</span>File is ready. Click to copy link to clipboard: <span id="share" class="link">{{link}}</span>',
+				file: '<span class="icon">&#10004;</span>File is ready. <a target="_blank" class="link" href="{{url}}">Click here to download!</a>',
+				copied: '<span class="icon">&#10004;</span>Link has been copied to your clipboard.'
 			}
 		},
 		timeout: {
 			connectToHost: 10000
+		},
+		clipboard: {
+			id: 'share',
+			swfPath: '/resources/clipboard.swf'
 		}
 	};
 
@@ -137,6 +142,7 @@ var linkify = function($, document) {
 				_message.show();
 				_options.status.reference.addClass(_options.status.classes.waiting);
 
+				this.setupClipboard();
 				this.listenForPeer(file);
 			}
 		},
@@ -203,6 +209,35 @@ var linkify = function($, document) {
 					_setText('status', 'success');
 				}
 			}, 50);
+		},
+
+		// Binds clipboard functionality to share link.
+		setupClipboard: function() {
+			var clipboard;
+
+			var checkElementExists = setInterval(function() {
+				var element = $('#' + _options.clipboard.id);
+
+				if(!element.length) {
+					return;
+				}
+
+				clearInterval(checkElementExists);
+
+				clipboard = new ZeroClipboard(_options.message.reference, { 
+					moviePath: _options.clipboard.swfPath,
+					forceHandCursor: true,
+				});
+
+				clipboard.on('dataRequested', function() {
+					clipboard.setText(element.html());
+				});
+
+				clipboard.on('complete', function() {
+					_setText('message', 'copied');
+					ZeroClipboard.destroy();
+				});
+			}, 100);
 		}
 	};
 
