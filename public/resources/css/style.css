@@ -1,6 +1,9 @@
 /* Fonts */
 @import url(https://fonts.googleapis.com/css?family=Raleway);
 
+/* !normalize.css v2.1.3 | MIT License | git.io/normalize */
+article,aside,details,figcaption,figure,footer,header,hgroup,main,nav,section,summary{display:block}audio,canvas,video{display:inline-block}audio:not([controls]){display:none;height:0}[hidden],template{display:none}html{font-family:sans-serif;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}body{margin:0}a{background:transparent}a:focus{outline:thin dotted}a:active,a:hover{outline:0}h1{font-size:2em;margin:.67em 0}abbr[title]{border-bottom:1px dotted}b,strong{font-weight:bold}dfn{font-style:italic}hr{-moz-box-sizing:content-box;box-sizing:content-box;height:0}mark{background:#ff0;color:#000}code,kbd,pre,samp{font-family:monospace,serif;font-size:1em}pre{white-space:pre-wrap}q{quotes:"\201C" "\201D" "\2018" "\2019"}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sup{top:-0.5em}sub{bottom:-0.25em}img{border:0}svg:not(:root){overflow:hidden}figure{margin:0}fieldset{border:1px solid #c0c0c0;margin:0 2px;padding:.35em .625em .75em}legend{border:0;padding:0}button,input,select,textarea{font-family:inherit;font-size:100%;margin:0}button,input{line-height:normal}button,select{text-transform:none}button,html input[type="button"],input[type="reset"],input[type="submit"]{-webkit-appearance:button;cursor:pointer}button[disabled],html input[disabled]{cursor:default}input[type="checkbox"],input[type="radio"]{box-sizing:border-box;padding:0}input[type="search"]{-webkit-appearance:textfield;-moz-box-sizing:content-box;-webkit-box-sizing:content-box;box-sizing:content-box}input[type="search"]::-webkit-search-cancel-button,input[type="search"]::-webkit-search-decoration{-webkit-appearance:none}button::-moz-focus-inner,input::-moz-focus-inner{border:0;padding:0}textarea{overflow:auto;vertical-align:top}table{border-collapse:collapse;border-spacing:0}
+
 /* Animations */
 @-webkit-keyframes spin {
 	from {
@@ -22,25 +25,21 @@ body {
 body, h1, h2 {
 	font-family: 'Raleway', sans-serif;
 }
+h1, h2 {
+	font-weight: 500;
+	margin: 0;
+}
 h1 {
 	font-size: 58px;
 	color: #111;
 	font-weight: bold;
-}
-h1 span {
-	color: #ccc;
+	margin-bottom: 3px;
 }
 h2 {
-	color: #555;
 	font-size: 27px;
-	margin-top: 0px;
-	padding: 0 0 10px 0;
-	line-height: 80%;
+	color: #555;
 }
-.container {
-	width: 100%;
-}
-.glyphicon {
+.icon {
 	margin-right: 10px;
 	color: #298fc9;
 }
@@ -56,15 +55,19 @@ h2 {
 #droparea {
 	width: 100%;
 	height: 100%;
-	z-index: 2;
 	position: absolute;
+	z-index: 1;
+}
+#container {
+	height: 100%;
+	overflow: hidden;
 }
 #header {
-	margin: 0 0 0 13px;
+	margin: 15px 0 0 25px;
 }
 #status {
-	width: 363px;
-	height: 363px;
+	width: 329px;
+	height: 329px;
 	position: absolute;
 	margin: auto;
 	top: 0;
@@ -75,6 +78,16 @@ h2 {
 	padding: 10px;
 	border-radius: 50%;
 }
+#status.ready {
+	border-color: #ccc;
+	-webkit-transition: border-color .3s ease-in-out;
+	transition: border-color .3s ease-in-out;
+}
+#status.hover {
+	border-color: #aaa;
+	-webkit-animation: spin 10s linear infinite;
+	animation: spin 10s linear infinite;
+}
 #status div {
 	width: 100%;
 	height: 100%;
@@ -82,53 +95,41 @@ h2 {
 	display: table;
 	background-color: rgba(0, 0, 0, 0);
 }
-#status.ready {
-	border-color: #ccc;
-	-webkit-transition: border-color .3s ease-in-out;
-	transition: border-color .3s ease-in-out;
-}
 #status.ready div {
 	background: rgba(0, 0, 0, .8);
 	-webkit-transition: background-color .5s ease-in-out;
 	transition: background-color .5s ease-in-out;
 }
-#status.ready #status-text {
-	color: #eee;
-}
-#status.hover {
-	border-color: #aaa;
-	-webkit-animation: spin 10s linear infinite;
-	animation: spin 10s linear infinite;
-}
 #status.hover div {
 	background: rgba(0, 0, 0, .9);
 }
-#status.hover #status-text {
-	-webkit-animation: spin 10s reverse linear infinite;
-	animation: spin 10s reverse linear infinite;
-}
-#status-text {
+#status #text {
 	font-size: 22px;
 	color: #666;
 	display: table-cell;
 	vertical-align: middle;
 	text-align: center;
-	-webkit-transition: opacity .1s ease-in-out;
-	transition: opacity .1s ease-in-out;
+	-webkit-transition: opacity .15s ease-in-out;
+	transition: opacity .15s ease-in-out;
+}
+#status.ready #text {
+	color: #eee;
+}
+#status.hover #text {
+	-webkit-animation: spin 10s reverse linear infinite;
+	animation: spin 10s reverse linear infinite;
 }
 #message {
 	position: absolute;
 	bottom: 0;
-	left: 0;
-	overflow: hidden;
 	width: 100%;
 	background: rgba(0, 0, 0, .9);
-	line-height: 68px;
+	line-height: 70px;
 	height: 0;
 	font-size: 16px;
 	color: #eee;
-	box-shadow: 0 -3px 5px rgba(0,0,0,0.5);
-	border-top: 1px solid #0c0c0c;
+	text-align: center;
+	box-shadow: 0 -3px 5px rgba(0,0,0,0.3);
 	-webkit-transition: height .3s ease-in-out;
 	transition: height .3s ease-in-out;
 }

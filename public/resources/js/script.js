@@ -15,7 +15,7 @@ var linkify = function($, document) {
 		},
 		status: {
 			reference: $('#status'),
-			text: $('#status-text'),
+			text: $('#text'),
 			classes: {
 				ready: 'ready',
 				hover: 'hover'
@@ -28,7 +28,7 @@ var linkify = function($, document) {
 			}
 		},
 		text: {
-			fadeDuration: 100,
+			fadeDuration: 150,
 			fadeClass: 'invisible',
 			statuses: {
 				drag: 'Drag a file here...',
@@ -43,8 +43,8 @@ var linkify = function($, document) {
 				progress: '{{percentage}}%'
 			},
 			messages: {
-				ready: '<span class="glyphicon glyphicon-ok"></span>File is ready. Share this link: <span class="link">{{link}}</span>',
-				file: '<span class="glyphicon glyphicon-ok"></span>File is ready. <a target="_blank" href="{{url}}">Click here to download!</a>'
+				ready: '<span class="icon">&#10004;</span>File is ready. Share this link: <span class="link">{{link}}</span>',
+				file: '<span class="icon">&#10004;</span>File is ready. <a target="_blank" href="{{url}}">Click here to download!</a>'
 			}
 		},
 		timeout: {
@@ -67,6 +67,8 @@ var linkify = function($, document) {
 			var hoverActive = false;
 
 			var toggleHover = function(e) {
+				stopEvent(e);
+				
 				if(hoverActive) {
 					_options.status.reference.removeClass(_options.status.classes.hover);
 					_setText('status', 'drag');
