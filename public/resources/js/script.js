@@ -19,7 +19,8 @@ var linkify = function($, document) {
 			classes: {
 				ready: 'ready',
 				hover: 'hover',
-				waiting: 'waiting'
+				waiting: 'waiting',
+				sending: 'sending'
 			}
 		},
 		message: {
@@ -41,7 +42,7 @@ var linkify = function($, document) {
 				established: 'Connection established.',
 				sending: 'Sending...',
 				receiving: 'Receiving...',
-				success: '<p class="success">File successfully sent.</p>',
+				success: 'File successfully sent.',
 				error: '<p class="error">Attempt to connect failed.</p>',
 				progress: '{{percentage}}%'
 			},
@@ -57,6 +58,11 @@ var linkify = function($, document) {
 		clipboard: {
 			id: 'share',
 			swfPath: '/resources/clipboard.swf'
+		},
+		progress: {
+			reference: $('#progress'),
+			first: $('#progress-first'),
+			second: $('#progress-second'),
 		}
 	};
 
@@ -155,6 +161,8 @@ var linkify = function($, document) {
 				if(connection.label && connection.label === 'file') {
 					callback = function() {
 						_setText('status', 'sending');
+						_options.status.reference.removeClass(_options.status.classes.waiting);
+						_options.status.reference.addClass(_options.status.classes.sending);
 						_host.setProgress(connection, file.size);
 						_message.hide();
 
@@ -179,20 +187,44 @@ var linkify = function($, document) {
 
 		// Check file transfer progress and push updates to peer.
 		setProgress: function(connection, filesize) {
-			var bufferedAmount = 0;
 			var previous = 0;
 			var percentage = 1;
+			var overHalf = false;
+			var first = _options.progress.first;
+			var second = _options.progress.second;
+
+			var setRotation = function(element, value) {
+				element.css('-webkit-transform', 'rotate(' + value + 'deg)');
+				element.css('transform', 'rotate(' + value + 'deg)');
+			}
 
 			var progress = setInterval(function() {
-				bufferedAmount = connection.dataChannel.bufferedAmount;
+				var bufferedAmount = connection.dataChannel.bufferedAmount || 0;
+				var degrees = 0;
+
 				percentage = Math.floor(100 - ((bufferedAmount / filesize) * 100));
 
 				if(percentage > previous) {
-					previous = percentage;
-
 					_setText('status', 'progress', {
 						percentage: percentage
-					});
+					}, true);
+
+					if(!overHalf && percentage > 50) {
+						_options.progress.reference.addClass('half');
+						setRotation(first, 360);
+
+						overHalf = true;
+					}
+
+					if(percentage < 50) {
+						degrees = 180 + Math.floor(180 * (percentage * 2 / 100));
+
+						setRotation(first, degrees);
+					} else {
+						degrees = Math.floor(180 * ((percentage - 50) * 2 / 100));
+
+						setRotation(second, degrees);
+					}
 
 					if(_session.textConnection !== null) {
 						_session.textConnection.send({
@@ -202,9 +234,11 @@ var linkify = function($, document) {
 							}
 						});
 					}
+
+					previous = percentage;
 				}
 
-				if(percentage === 100) {
+				if(percentage >= 100) {
 					clearInterval(progress);
 					_setText('status', 'success');
 				}
@@ -368,11 +402,12 @@ var linkify = function($, document) {
 	};
 
 	// Display a message to the user.
-	var _setText = function(type, identifier, replacements) {
+	var _setText = function(type, identifier, replacements, noanimate) {
 		var type = type || 'status';
 		var namespace = (type === 'status' ? _options.text.statuses : _options.text.messages);
 		var container = (type === 'status' ? _options.status.text : _options.message.text);
 		var text = namespace[identifier];
+		var noanimate = !!noanimate || false;
 
 		if(!text || typeof text !== 'string') {
 			return false;
@@ -393,11 +428,15 @@ var linkify = function($, document) {
 			}
 		}
 
-		container.addClass(_options.text.fadeClass);
-		setTimeout(function() {
+		if(noanimate) {
 			container.html(text);
-			container.removeClass(_options.text.fadeClass);
-		}, _options.text.fadeDuration);
+		} else {
+			container.addClass(_options.text.fadeClass);
+			setTimeout(function() {
+				container.html(text);
+				container.removeClass(_options.text.fadeClass);
+			}, _options.text.fadeDuration);
+		}
 	};
 
 	// Receive messages from host and update the UI of status.

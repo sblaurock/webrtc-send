@@ -52,17 +52,21 @@ h2 {
 .error {
 	color: #a30000;
 }
-.success, .link {
+.link {
 	color: #298fc9;
 }
 .invisible {
 	opacity: 0;
 }
+.paused {
+	-webkit-animation-play-state: paused !important;
+	animation-play-state: paused !important;
+}
 #droparea {
 	width: 100%;
 	height: 100%;
 	position: absolute;
-	z-index: 1;
+	z-index: 2;
 }
 #container {
 	height: 100%;
@@ -94,10 +98,18 @@ h2 {
 	-webkit-animation: spin 10s linear infinite;
 	animation: spin 10s linear infinite;
 }
+#status.sending {
+	-webkit-transition: padding .1s linear, border .1s linear;
+	transition: padding .1s linear, border .1s linear;
+	padding: 0;
+	border: 15px solid #ccc;
+}
 #status div {
 	width: 100%;
 	height: 100%;
 	border-radius: 50%;
+	position: relative;
+	z-index: 1;
 	display: table;
 	background-color: rgba(0, 0, 0, 0);
 }
@@ -107,6 +119,9 @@ h2 {
 	transition: background-color .5s ease-in-out;
 }
 #status.hover div {
+	background: rgba(0, 0, 0, .9);
+}
+#status.sending div {
 	background: rgba(0, 0, 0, .9);
 }
 #status #status-text {
@@ -122,6 +137,26 @@ h2 {
 #status.hover #status-text, #status.waiting #status-text {
 	-webkit-animation: spin 10s reverse linear infinite;
 	animation: spin 10s reverse linear infinite;
+}
+#progress, #progress div {
+	width: 360px;
+	height: 360px;
+	position: absolute;
+	margin: auto;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	border-radius: 50%;
+	clip: rect(0, 360px, 360px, 180px);
+}
+#progress.half {
+	clip: auto;
+}
+#progress div {
+	background: rgba(41, 143, 201, 1);
+	-webkit-transform: rotate(180deg);
+	transform: rotate(180deg);
 }
 #message {
 	position: absolute;
