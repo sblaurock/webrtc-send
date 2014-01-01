@@ -152,8 +152,6 @@ var linkify = function($, document) {
 					callback = function() {
 						_host.setStatusState('sending');
 						_host.setProgress(connection, file.size);
-						_message.hide();
-						_host.clipboard.destroy();
 
 						connection.send({
 							file: file,
@@ -244,6 +242,8 @@ var linkify = function($, document) {
 				if(percentage >= 100) {
 					clearInterval(progress);
 					_host.setStatusState('success');
+					_message.hide();
+					_host.clipboard.destroy();
 				}
 			}, 50);
 		},
