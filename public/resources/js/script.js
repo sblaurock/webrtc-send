@@ -134,7 +134,7 @@ var linkify = function($, document) {
 				_session.file = file;
 
 				_host.setStatusState('waiting');
-				_host.setupClipboard();
+				_host.clipboard.setup();
 				_host.listenForPeer(file);
 				_message.show();
 				_setText('message', 'ready', {
@@ -153,6 +153,7 @@ var linkify = function($, document) {
 						_host.setStatusState('sending');
 						_host.setProgress(connection, file.size);
 						_message.hide();
+						_host.clipboard.destroy();
 
 						connection.send({
 							file: file,
@@ -248,40 +249,44 @@ var linkify = function($, document) {
 		},
 
 		// Binds clipboard functionality to share link.
-		setupClipboard: function() {
-			var clipboard;
+		clipboard: {
+			setup: function() {
+				var instance;
 
-			var checkElementExists = setInterval(function() {
-				var element = $('#' + _options.clipboard.id);
+				var checkElementExists = setInterval(function() {
+					var element = $('#' + _options.clipboard.id);
 
-				if(!element.length) {
-					return;
-				}
-
-				clearInterval(checkElementExists);
-
-				clipboard = new ZeroClipboard(_options.message.reference, { 
-					moviePath: _options.clipboard.swfPath,
-					forceHandCursor: true,
-				});
-
-				clipboard.on('dataRequested', function() {
-					clipboard.setText(element.html());
-				});
-
-				clipboard.on("wrongFlash noFlash", function() {
-					try {
-						ZeroClipboard.destroy();
-					} catch (e) {
-						delete ZeroClipboard.prototype._singleton;
+					if(!element.length) {
+						return;
 					}
-				});
 
-				clipboard.on('complete', function() {
-					_setText('message', 'copied');
+					clearInterval(checkElementExists);
+
+					instance = new ZeroClipboard(_options.message.reference, { 
+						moviePath: _options.clipboard.swfPath,
+						forceHandCursor: true,
+					});
+
+					instance.on('dataRequested', function() {
+						instance.setText(element.html());
+					});
+
+					instance.on("wrongFlash noFlash", function() {
+						this.destroy();
+					});
+
+					instance.on('complete', function() {
+						_setText('message', 'copied');
+					});
+				}, 50);
+			},
+			destroy: function() {
+				try {
 					ZeroClipboard.destroy();
-				});
-			}, 100);
+				} catch (e) {
+					delete ZeroClipboard.prototype._singleton;
+				}
+			}
 		},
 
 		setStatusState: function(state) {
