@@ -149,14 +149,20 @@ h2 {
 	right: 0;
 	border-radius: 50%;
 	clip: rect(0, 360px, 360px, 180px);
+	-webkit-transition: -webkit-transform .05s linear;
+	transition: transform .05s linear;
 }
 #progress.half {
 	clip: auto;
+}
+#progress.half #progress-second {
+	display: block;
 }
 #progress div {
 	background: rgba(41, 143, 201, 1);
 	-webkit-transform: rotate(180deg);
 	transform: rotate(180deg);
+	display: none;
 }
 #message {
 	position: absolute;

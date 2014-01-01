@@ -3,6 +3,7 @@ var linkify = function($, document) {
 		host: 'linkify-server.herokuapp.com',
 		port: '443',
 		secure: true,
+		connectTimeout: 10000,
 		config: {'iceServers': [
 			{ url: 'stun:stun.l.google.com:19302' },
 			{ url: 'stun:stun1.l.google.com:19302' },
@@ -10,26 +11,6 @@ var linkify = function($, document) {
 			{ url: 'stun:stun3.l.google.com:19302' },
 			{ url: 'stun:stun4.l.google.com:19302' }
 		]},
-		dropArea: {
-			reference: $('#droparea'),
-		},
-		status: {
-			reference: $('#status'),
-			text: $('#status-text'),
-			classes: {
-				ready: 'ready',
-				hover: 'hover',
-				waiting: 'waiting',
-				sending: 'sending'
-			}
-		},
-		message: {
-			reference: $('#message'),
-			text: $('#message-text'),
-			classes: {
-				open: 'open'
-			}
-		},
 		text: {
 			fadeDuration: 150,
 			fadeClass: 'invisible',
@@ -52,8 +33,25 @@ var linkify = function($, document) {
 				copied: '<span class="icon">&#10004;</span>Link has been copied to your clipboard.'
 			}
 		},
-		timeout: {
-			connectToHost: 10000
+		dropArea: {
+			reference: $('#droparea'),
+		},
+		status: {
+			reference: $('#status'),
+			text: $('#status-text'),
+			classes: {
+				ready: 'ready',
+				hover: 'hover',
+				waiting: 'waiting',
+				sending: 'sending'
+			}
+		},
+		message: {
+			reference: $('#message'),
+			text: $('#message-text'),
+			classes: {
+				open: 'open'
+			}
 		},
 		clipboard: {
 			id: 'share',
@@ -63,6 +61,7 @@ var linkify = function($, document) {
 			reference: $('#progress'),
 			first: $('#progress-first'),
 			second: $('#progress-second'),
+			animationDuration: 50
 		}
 	};
 
@@ -188,7 +187,6 @@ var linkify = function($, document) {
 		// Check file transfer progress and push updates to peer.
 		setProgress: function(connection, filesize) {
 			var previous = 0;
-			var percentage = 1;
 			var overHalf = false;
 			var first = _options.progress.first;
 			var second = _options.progress.second;
@@ -200,20 +198,35 @@ var linkify = function($, document) {
 
 			var progress = setInterval(function() {
 				var bufferedAmount = connection.dataChannel.bufferedAmount || 0;
+				var percentage = Math.floor(100 - ((bufferedAmount / filesize) * 100));
 				var degrees = 0;
 
-				percentage = Math.floor(100 - ((bufferedAmount / filesize) * 100));
+				first.show();
 
 				if(percentage > previous) {
 					_setText('status', 'progress', {
 						percentage: percentage
 					}, true);
 
-					if(!overHalf && percentage > 50) {
-						_options.progress.reference.addClass('half');
+					if(!overHalf && percentage >= 50) {
 						setRotation(first, 360);
 
-						overHalf = true;
+						first.one('webkitTransitionEnd transitionend', function(e) {
+							if(!overHalf) {
+								overHalf = true;
+
+								_options.progress.reference.addClass('half');
+							}
+						});
+
+						// Fallback - We need to be sure that 'addClass' happens.
+						setTimeout(function() {
+							if(!overHalf) {
+								overHalf = true;
+
+								_options.progress.reference.addClass('half');
+							}
+						}, _options.progress.animationDuration * 2);
 					}
 
 					if(percentage < 50) {
