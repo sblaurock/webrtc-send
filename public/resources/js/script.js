@@ -18,14 +18,14 @@ var linkify = function($, document) {
 				drag: 'Drag a file here...',
 				drop: 'Awesome, now drop it.',
 				waiting: 'Waiting for peer...',
-				initializing: 'Loading...',
+				initializing: '<p class="loading">Loading...</p>',
 				connecting: 'Connecting to peer...',
 				established: 'Connection established.',
 				sending: 'Sending...',
 				receiving: 'Receiving...',
 				success: 'File successfully sent.',
 				error: '<p class="error">Attempt to connect failed.</p>',
-				progress: '{{percentage}}%'
+				progress: '<p class="percentage">{{percentage}}</p>'
 			},
 			messages: {
 				ready: '<span class="icon">&#10004;</span>File is ready. Click to copy link to clipboard: <span id="share" class="link">{{link}}</span>',
@@ -38,12 +38,15 @@ var linkify = function($, document) {
 		},
 		status: {
 			reference: $('#status'),
+			inner: $('#status-inner'),
 			text: $('#status-text'),
 			classes: {
+				paused: 'paused',
 				ready: 'ready',
 				hover: 'hover',
 				waiting: 'waiting',
-				sending: 'sending'
+				sending: 'sending',
+				success: 'success'
 			}
 		},
 		message: {
@@ -87,15 +90,7 @@ var linkify = function($, document) {
 					return false;
 				}
 
-				stopEvent(e);
-
-				if(hoverActive) {
-					_options.status.reference.removeClass(_options.status.classes.hover);
-					_setText('status', 'drag');
-				} else {
-					_options.status.reference.addClass(_options.status.classes.hover);
-					_setText('status', 'drop');
-				}
+				hoverActive ? _host.setStatusState('ready') : _host.setStatusState('hover')
 
 				previousEvent = e.type;
 				hoverActive = !hoverActive;
@@ -114,7 +109,6 @@ var linkify = function($, document) {
 			dropArea.on('dragenter', toggleHover);
 			dropArea.on('dragleave', toggleHover);
 			dropArea.on('drop', function(e) {
-				toggleHover(e);
 				dropArea.remove();
 				_host.handleDrop(e);
 			});
@@ -127,8 +121,7 @@ var linkify = function($, document) {
 				}
 			};
 
-			_options.status.reference.toggleClass(_options.status.classes.ready);
-			_setText('status', 'drag');
+			this.setStatusState('ready');
 		},
 
 		// Initiate a session when a file is dropped.
@@ -140,15 +133,13 @@ var linkify = function($, document) {
 
 				_session.file = file;
 
-				_setText('status', 'waiting');
+				_host.setStatusState('waiting');
+				_host.setupClipboard();
+				_host.listenForPeer(file);
+				_message.show();
 				_setText('message', 'ready', {
 					'link': document.URL + '#' + _session.id
 				});
-				_message.show();
-				_options.status.reference.addClass(_options.status.classes.waiting);
-
-				this.setupClipboard();
-				this.listenForPeer(file);
 			}
 		},
 
@@ -159,9 +150,7 @@ var linkify = function($, document) {
 			_session.reference.on('connection', function(connection) {
 				if(connection.label && connection.label === 'file') {
 					callback = function() {
-						_setText('status', 'sending');
-						_options.status.reference.removeClass(_options.status.classes.waiting);
-						_options.status.reference.addClass(_options.status.classes.sending);
+						_host.setStatusState('sending');
 						_host.setProgress(connection, file.size);
 						_message.hide();
 
@@ -253,7 +242,7 @@ var linkify = function($, document) {
 
 				if(percentage >= 100) {
 					clearInterval(progress);
-					_setText('status', 'success');
+					_host.setStatusState('success');
 				}
 			}, 50);
 		},
@@ -280,11 +269,59 @@ var linkify = function($, document) {
 					clipboard.setText(element.html());
 				});
 
+				clipboard.on("wrongFlash noFlash", function() {
+					try {
+						ZeroClipboard.destroy();
+					} catch (e) {
+						delete ZeroClipboard.prototype._singleton;
+					}
+				});
+
 				clipboard.on('complete', function() {
 					_setText('message', 'copied');
 					ZeroClipboard.destroy();
 				});
 			}, 100);
+		},
+
+		setStatusState: function(state) {
+			var status = _options.status;
+
+			switch(state) {
+				case 'ready':
+					status.reference.addClass(status.classes.ready);
+					status.reference.toggleClass(status.classes.paused);
+					status.reference.removeClass(status.classes.hover);
+					status.inner.toggleClass(status.classes.paused);
+					_setText('status', 'drag');
+					break;
+
+				case 'hover':
+					status.reference.toggleClass(status.classes.paused);
+					status.reference.addClass(status.classes.hover);
+					status.inner.toggleClass(status.classes.paused);
+					_setText('status', 'drop');
+					break;
+
+				case 'waiting':
+					status.reference.addClass(status.classes.waiting);
+					status.reference.removeClass(status.classes.hover);
+					_setText('status', 'waiting');
+					break;
+
+				case 'sending':
+					status.reference.removeClass(status.classes.ready);
+					status.reference.removeClass(status.classes.waiting);
+					status.reference.addClass(status.classes.sending);
+					_setText('status', 'sending');
+					break;
+
+				case 'success':
+					status.reference.removeClass(status.classes.sending);
+					status.reference.addClass(status.classes.success);
+					_setText('status', 'success');
+					break;
+			}
 		}
 	};
 
@@ -303,7 +340,7 @@ var linkify = function($, document) {
 				_session.reference.destroy();
 
 				return;
-			}, _options.timeout.connectToHost);
+			}, _options.connectTimeout);
 
 			_handleConnection(fileConnection, function() {
 				clearTimeout(timeout);
@@ -454,6 +491,9 @@ var linkify = function($, document) {
 
 	// Receive messages from host and update the UI of status.
 	var _handleText = function(data) {
+		// TEMPORARY
+		_options.status.reference.addClass('success');
+
 		if(data && data.message) {
 			_setText('status', data.message, data.replacements);
 		}

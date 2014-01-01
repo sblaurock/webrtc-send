@@ -55,6 +55,12 @@ h2 {
 .link {
 	color: #298fc9;
 }
+.loading {
+	color: #666;
+}
+.percentage {
+	font-size: 56px;
+}
 .invisible {
 	opacity: 0;
 }
@@ -92,11 +98,11 @@ h2 {
 	border-color: #ccc;
 	-webkit-transition: border-color .3s ease-in-out;
 	transition: border-color .3s ease-in-out;
+	-webkit-animation: spin 10s linear infinite;
+	animation: spin 10s linear infinite;
 }
 #status.hover, #status.waiting {
 	border-color: #aaa;
-	-webkit-animation: spin 10s linear infinite;
-	animation: spin 10s linear infinite;
 }
 #status.sending {
 	-webkit-transition: padding .1s linear, border .1s linear;
@@ -115,28 +121,23 @@ h2 {
 }
 #status.ready div {
 	background: rgba(0, 0, 0, .8);
+	-webkit-animation: spin 10s reverse linear infinite;
+	animation: spin 10s reverse linear infinite;
 	-webkit-transition: background-color .5s ease-in-out;
 	transition: background-color .5s ease-in-out;
 }
 #status.hover div {
 	background: rgba(0, 0, 0, .9);
 }
-#status.sending div {
-	background: rgba(0, 0, 0, .9);
+#status.sending div, #status.success div {
+	background: rgba(47, 47, 47, 1);
 }
 #status #status-text {
 	font-size: 22px;
-	color: #666;
+	color: #eee;
 	display: table-cell;
 	vertical-align: middle;
 	text-align: center;
-}
-#status.ready #status-text {
-	color: #eee;
-}
-#status.hover #status-text, #status.waiting #status-text {
-	-webkit-animation: spin 10s reverse linear infinite;
-	animation: spin 10s reverse linear infinite;
 }
 #progress, #progress div {
 	width: 360px;
@@ -160,9 +161,9 @@ h2 {
 }
 #progress div {
 	background: rgba(41, 143, 201, 1);
+	display: none;
 	-webkit-transform: rotate(180deg);
 	transform: rotate(180deg);
-	display: none;
 }
 #message {
 	position: absolute;
