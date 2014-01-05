@@ -16,6 +16,14 @@ article,aside,details,figcaption,figure,footer,header,hgroup,main,nav,section,su
 		-webkit-transform: rotate(360deg);
 	}
 }
+@keyframes spin {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
+}
 
 /* Page Styles */
 html, body {
@@ -76,6 +84,7 @@ h2 {
 	height: 100%;
 	position: absolute;
 	z-index: 2;
+	display: none;
 }
 #container {
 	height: 100%;
@@ -97,6 +106,11 @@ h2 {
 	padding: 10px;
 	border-radius: 50%;
 }
+@-moz-document url-prefix() {
+	#status {
+		border-style: inset;
+	}
+}
 #status.ready {
 	border-color: #ccc;
 	-webkit-transition: border-color .3s ease-in-out;
@@ -107,13 +121,13 @@ h2 {
 #status.hover, #status.waiting {
 	border-color: #aaa;
 }
-#status.sending {
+#status.transferring {
 	-webkit-transition: border .1s ease-out, box-shadow .1s ease-out;
 	transition: border .1s ease-out, box-shadow .1s ease-out;
 	padding: 0;
 	border: 15px solid #ccc;
 }
-#status.sending, #status.success {
+#status.transferring, #status.success {
 	box-shadow: 0 0 15px 0 rgba(0, 0, 0, .3);
 }
 #status div {
@@ -135,7 +149,7 @@ h2 {
 #status.hover div {
 	background: rgba(0, 0, 0, .9);
 }
-#status.sending div, #status.success div {
+#status.transferring div, #status.success div {
 	background: rgba(47, 47, 47, 1);
 }
 #status #status-text {

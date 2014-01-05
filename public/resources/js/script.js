@@ -3,7 +3,7 @@ var linkify = function($, document) {
 		host: 'linkify-server.herokuapp.com',
 		port: '443',
 		secure: true,
-		connectTimeout: 10000,
+		connectTimeout: 20000,
 		config: {'iceServers': [
 			{ url: 'stun:stun.l.google.com:19302' },
 			{ url: 'stun:stun1.l.google.com:19302' },
@@ -21,8 +21,6 @@ var linkify = function($, document) {
 				initializing: '<p class="loading">Loading...</p>',
 				connecting: 'Connecting to peer...',
 				established: 'Connection established.',
-				sending: 'Sending...',
-				receiving: 'Receiving...',
 				success: 'File successfully sent.',
 				error: '<p class="error">Attempt to connect failed.</p>',
 				progress: '<p class="percentage">{{percentage}}</p>'
@@ -45,7 +43,7 @@ var linkify = function($, document) {
 				ready: 'ready',
 				hover: 'hover',
 				waiting: 'waiting',
-				sending: 'sending',
+				transferring: 'transferring',
 				success: 'success'
 			}
 		},
@@ -122,6 +120,7 @@ var linkify = function($, document) {
 			};
 
 			this.setStatusState('ready');
+			_options.dropArea.reference.show();
 		},
 
 		// Initiate a session when a file is dropped.
@@ -248,7 +247,7 @@ var linkify = function($, document) {
 			}, 50);
 		},
 
-		// Binds clipboard functionality to share link.
+		// Defines clipboard functionality for sharelink.
 		clipboard: {
 			setup: function() {
 				var instance;
@@ -289,6 +288,7 @@ var linkify = function($, document) {
 			}
 		},
 
+		// Sets various UI states of 'status' section.
 		setStatusState: function(state) {
 			var status = _options.status;
 
@@ -318,7 +318,6 @@ var linkify = function($, document) {
 					status.reference.removeClass(status.classes.ready);
 					status.reference.removeClass(status.classes.waiting);
 					status.reference.addClass(status.classes.sending);
-					_setText('status', 'sending');
 					break;
 
 				case 'success':
@@ -337,7 +336,7 @@ var linkify = function($, document) {
 			var fileConnection = _session.reference.connect(peerId, { label: 'file' });
 			var textConnection = _session.reference.connect(peerId, { label: 'text' });
 
-			_setText('status', 'connecting');
+			this.setStatusState('ready');
 
 			// If we can't connect within defined time frame then message user and destroy session.
 			timeout = setTimeout(function() {
@@ -381,6 +380,24 @@ var linkify = function($, document) {
 					});
 					_message.show();
 				}
+			}
+		},
+
+		// Sets various UI states of 'status' section.
+		setStatusState: function(state) {
+			var status = _options.status;
+
+			switch(state) {
+				case 'ready':
+					status.reference.addClass(status.classes.ready);
+					_setText('status', 'connecting');
+					break;
+
+				case 'established':
+					status.reference.removeClass(status.classes.ready);
+					status.reference.addClass(status.classes.transferring);
+					_setText('status', 'established');
+					break;
 			}
 		}
 	};
@@ -426,7 +443,7 @@ var linkify = function($, document) {
 			if(connection.label && connection.label === 'file') {
 				_session.fileConnection = connection;
 
-				_setText('status', 'established');
+				_peer.setStatusState('established');
 			}
 
 			if(connection.label && connection.label === 'text') {
@@ -483,7 +500,7 @@ var linkify = function($, document) {
 			}
 		}
 
-		if(noanimate) {
+		if(noanimate || type == 'message') {
 			container.html(text);
 		} else {
 			container.addClass(_options.text.fadeClass);
@@ -496,9 +513,6 @@ var linkify = function($, document) {
 
 	// Receive messages from host and update the UI of status.
 	var _handleText = function(data) {
-		// TEMPORARY
-		_options.status.reference.addClass('success');
-
 		if(data && data.message) {
 			_setText('status', data.message, data.replacements);
 		}
@@ -514,7 +528,6 @@ var linkify = function($, document) {
 
 		initiatePeer: function(peerId) {
 			_createSession(function(id, session) {
-				_options.dropArea.reference.remove();
 				_peer.connectToHost(peerId);
 			});
 		}
