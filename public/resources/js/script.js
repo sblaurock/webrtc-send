@@ -135,8 +135,7 @@ var linkify = function($, document) {
 				_host.setStatusState('waiting');
 				_host.clipboard.setup();
 				_host.listenForPeer(file);
-				_message.show();
-				_setText('message', 'ready', {
+				_message.show('ready', {
 					'link': document.URL + '#' + _session.id
 				});
 			}
@@ -150,7 +149,7 @@ var linkify = function($, document) {
 				if(connection.label && connection.label === 'file') {
 					callback = function() {
 						_host.setStatusState('sending');
-						_host.setProgress(connection, file.size);
+						_host.handleProgress(connection, file.size);
 
 						connection.send({
 							file: file,
@@ -163,7 +162,7 @@ var linkify = function($, document) {
 
 				if(connection.label && connection.label === 'text') {
 					callback = function() {
-						_listen(connection, _handleText);
+						// No use for this yet.
 					};
 				}
 
@@ -172,66 +171,22 @@ var linkify = function($, document) {
 		},
 
 		// Check file transfer progress and push updates to peer.
-		setProgress: function(connection, filesize) {
+		handleProgress: function(connection, filesize) {
 			var previous = 0;
-			var overHalf = false;
-			var first = _options.progress.first;
-			var second = _options.progress.second;
 
-			var setRotation = function(element, value) {
-				element.css('-webkit-transform', 'rotate(' + value + 'deg)');
-				element.css('transform', 'rotate(' + value + 'deg)');
-			}
+			_options.progress.first.show();
 
 			var progress = setInterval(function() {
 				var bufferedAmount = connection.dataChannel.bufferedAmount || 0;
 				var percentage = Math.floor(100 - ((bufferedAmount / filesize) * 100));
-				var degrees = 0;
-
-				first.show();
 
 				if(percentage > previous) {
-					_setText('status', 'progress', {
-						percentage: percentage
-					}, true);
-
-					if(!overHalf && percentage >= 50) {
-						setRotation(first, 360);
-
-						first.one('webkitTransitionEnd transitionend', function(e) {
-							if(!overHalf) {
-								overHalf = true;
-
-								_options.progress.reference.addClass('half');
-							}
-						});
-
-						// Fallback - We need to be sure that 'addClass' happens.
-						setTimeout(function() {
-							if(!overHalf) {
-								overHalf = true;
-
-								_options.progress.reference.addClass('half');
-							}
-						}, _options.progress.animationDuration * 2);
-					}
-
-					if(percentage < 50) {
-						degrees = 180 + Math.floor(180 * (percentage * 2 / 100));
-
-						setRotation(first, degrees);
-					} else {
-						degrees = Math.floor(180 * ((percentage - 50) * 2 / 100));
-
-						setRotation(second, degrees);
-					}
+					_setProgress(percentage);
 
 					if(_session.textConnection !== null) {
 						_session.textConnection.send({
 							message: 'progress',
-							replacements: {
-								percentage: percentage
-							}
+							percentage: percentage
 						});
 					}
 
@@ -247,7 +202,7 @@ var linkify = function($, document) {
 			}, 50);
 		},
 
-		// Defines clipboard functionality for sharelink.
+		// Defines clipboard functionality for share link.
 		clipboard: {
 			setup: function() {
 				var instance;
@@ -352,7 +307,8 @@ var linkify = function($, document) {
 			});
 
 			_handleConnection(textConnection, function() {
-				_listen(textConnection, _handleText);
+				_options.progress.first.show();
+				_listen(textConnection, _peer.handleProgress);
 			});
 		},
 
@@ -367,18 +323,16 @@ var linkify = function($, document) {
 
 				if(_session.textConnection !== null) {
 					_session.textConnection.on('close', function() {
-						_setText('message', 'file', {
+						_message.show('file', {
 							url: url
 						});
-						_message.show();
 					});
 
 					_session.textConnection.close();
 				} else {
-					_setText('message', 'file', {
+					_message.show('file', {
 						url: url
 					});
-					_message.show();
 				}
 			}
 		},
@@ -399,6 +353,13 @@ var linkify = function($, document) {
 					_setText('status', 'established');
 					break;
 			}
+		},
+
+		// Receive messages from host and update the UI of status.
+		handleProgress: function(data) {
+			if(data && data.message && data.message === 'progress') {
+				_setProgress(data.percentage);
+			}
 		}
 	};
 
@@ -407,7 +368,11 @@ var linkify = function($, document) {
 			_options.message.reference.toggleClass(_options.message.classes.open);
 		},
 
-		show: function() {
+		show: function(text, replacements) {
+			if(text && typeof text === 'string') {
+				_setText('message', text, replacements, true);
+			}
+
 			_options.message.reference.addClass(_options.message.classes.open);
 		},
 
@@ -473,6 +438,51 @@ var linkify = function($, document) {
 		});
 	};
 
+	// Sets the circular progress indicator to the correct position.
+	var _setProgress = function(percentage) {
+		var first = _options.progress.first;
+		var second = _options.progress.second;
+		var setRotation = function(element, value) {
+			element.css('-webkit-transform', 'rotate(' + value + 'deg)');
+			element.css('transform', 'rotate(' + value + 'deg)');
+		};
+
+		_setText('status', 'progress', {
+			percentage: percentage
+		}, true);
+
+		if(!_setProgress.overHalf && percentage >= 50) {
+			setRotation(first, 360);
+
+			first.one('webkitTransitionEnd transitionend', function(e) {
+				if(!_setProgress.overHalf) {
+					_setProgress.overHalf = true;
+
+					_options.progress.reference.addClass('half');
+				}
+			});
+
+			// Fallback - We need to be sure that 'addClass' happens.
+			setTimeout(function() {
+				if(!_setProgress.overHalf) {
+					_setProgress.overHalf = true;
+
+					_options.progress.reference.addClass('half');
+				}
+			}, _options.progress.animationDuration * 2);
+		}
+
+		if(percentage < 50) {
+			degrees = 180 + Math.floor(180 * (percentage * 2 / 100));
+
+			setRotation(first, degrees);
+		} else {
+			degrees = Math.floor(180 * ((percentage - 50) * 2 / 100));
+
+			setRotation(second, degrees);
+		}
+	};
+
 	// Display a message to the user.
 	var _setText = function(type, identifier, replacements, noanimate) {
 		var type = type || 'status';
@@ -500,7 +510,7 @@ var linkify = function($, document) {
 			}
 		}
 
-		if(noanimate || type == 'message') {
+		if(noanimate) {
 			container.html(text);
 		} else {
 			container.addClass(_options.text.fadeClass);
@@ -508,13 +518,6 @@ var linkify = function($, document) {
 				container.html(text);
 				container.removeClass(_options.text.fadeClass);
 			}, _options.text.fadeDuration);
-		}
-	};
-
-	// Receive messages from host and update the UI of status.
-	var _handleText = function(data) {
-		if(data && data.message) {
-			_setText('status', data.message, data.replacements);
 		}
 	};
 
