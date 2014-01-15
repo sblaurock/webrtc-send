@@ -180,8 +180,10 @@ h2 {
 	display: block;
 }
 #progress div {
-	background: rgba(41, 143, 201, 1);
+	background: rgba(41, 143, 200, 1);
 	display: none;
+	-webkit-transition: background-color .1s linear;
+	transition: background-color .1s linear;
 	-webkit-transform: rotate(180deg);
 	transform: rotate(180deg);
 }

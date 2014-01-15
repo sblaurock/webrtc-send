@@ -21,7 +21,7 @@ var linkify = function($, document) {
 				initializing: '<p class="loading">Loading...</p>',
 				connecting: 'Connecting to peer...',
 				established: 'Connection established.',
-				success: 'File successfully sent.',
+				success: 'File transfer complete.',
 				error: '<p class="error">Attempt to connect failed.</p>',
 				progress: '<p class="percentage">{{percentage}}</p>'
 			},
@@ -272,11 +272,11 @@ var linkify = function($, document) {
 				case 'sending':
 					status.reference.removeClass(status.classes.ready);
 					status.reference.removeClass(status.classes.waiting);
-					status.reference.addClass(status.classes.sending);
+					status.reference.addClass(status.classes.transferring);
 					break;
 
 				case 'success':
-					status.reference.removeClass(status.classes.sending);
+					status.reference.removeClass(status.classes.transferring);
 					status.reference.addClass(status.classes.success);
 					_setText('status', 'success');
 					break;
@@ -323,6 +323,8 @@ var linkify = function($, document) {
 
 				if(_session.textConnection !== null) {
 					_session.textConnection.on('close', function() {
+						_setProgress(100);
+						_peer.setStatusState('success');
 						_message.show('file', {
 							url: url
 						});
@@ -351,6 +353,12 @@ var linkify = function($, document) {
 					status.reference.removeClass(status.classes.ready);
 					status.reference.addClass(status.classes.transferring);
 					_setText('status', 'established');
+					break;
+
+				case 'success':
+					status.reference.removeClass(status.classes.transferring);
+					status.reference.addClass(status.classes.success);
+					_setText('status', 'success');
 					break;
 			}
 		},
@@ -481,6 +489,10 @@ var linkify = function($, document) {
 
 			setRotation(second, degrees);
 		}
+
+		// In progress...
+		first.css('background-color', 'rgba(41, 143, ' + percentage * 2 + ', 1)');
+		second.css('background-color', 'rgba(41, 143, ' + percentage * 2 + ', 1)');
 	};
 
 	// Display a message to the user.
