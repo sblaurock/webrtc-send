@@ -27,7 +27,7 @@ var linkify = function($, document) {
 			},
 			messages: {
 				ready: '<span class="icon">&#10004;</span>File is ready. Click to copy link to clipboard: <span id="share" class="link">{{link}}</span>',
-				file: '<span class="icon">&#10004;</span>File is ready. <a target="_blank" class="link" href="{{url}}">Click here to download!</a>',
+				file: '<span class="icon">&#10004;</span>File is ready! {{type}} ({{size}}) - <a target="_blank" class="link" href="{{url}}">Click here to download.</a>',
 				copied: '<span class="icon">&#10004;</span>Link has been copied to your clipboard.',
 				unsupported: '<span class="error icon">&#9888;</span>Unfortunately, browser support is currently limited to: {{browsers}}.'
 			}
@@ -327,7 +327,9 @@ var linkify = function($, document) {
 						_setProgress(100);
 						_peer.setStatusState('success');
 						_message.show('file', {
-							url: url
+							url: url,
+							size: _formatFileSize(data.size),
+							type: data.type,
 						});
 					});
 
@@ -393,6 +395,19 @@ var linkify = function($, document) {
 	// Returns a boolean indicating the users browser support.
 	var _isSupported = function() {
 		return $.inArray(util.browser, _options.supported) !== -1 && util.supports.data;
+	};
+
+	// Returns a human readable filesize.
+	var _formatFileSize = function(filesize) {
+		var units = ['bytes', 'KB', 'MB', 'GB'];
+		var magnitude = 0;
+
+		while(filesize >= 1024) {
+			filesize /= 1024;
+			magnitude++;
+		}
+
+		return filesize.toFixed(1) + ' ' + units[magnitude];
 	};
 
 	// Create a peer session.
