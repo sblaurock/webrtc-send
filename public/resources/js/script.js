@@ -6,11 +6,11 @@ var linkify = function($, document) {
 		connectTimeout: 20000,
 		config: {'iceServers': [
 			{ url: 'stun:stun.l.google.com:19302' },
-			{ url: 'stun:stun1.l.google.com:19302' },
-			{ url: 'stun:stun2.l.google.com:19302' },
-			{ url: 'stun:stun3.l.google.com:19302' },
-			{ url: 'stun:stun4.l.google.com:19302' }
 		]},
+		supported: [
+			'Firefox',
+			'Chrome'
+		],
 		text: {
 			fadeDuration: 150,
 			fadeClass: 'invisible',
@@ -28,7 +28,8 @@ var linkify = function($, document) {
 			messages: {
 				ready: '<span class="icon">&#10004;</span>File is ready. Click to copy link to clipboard: <span id="share" class="link">{{link}}</span>',
 				file: '<span class="icon">&#10004;</span>File is ready. <a target="_blank" class="link" href="{{url}}">Click here to download!</a>',
-				copied: '<span class="icon">&#10004;</span>Link has been copied to your clipboard.'
+				copied: '<span class="icon">&#10004;</span>Link has been copied to your clipboard.',
+				unsupported: '<span class="error icon">&#9888;</span>Unfortunately, browser support is currently limited to: {{browsers}}.'
 			}
 		},
 		dropArea: {
@@ -389,25 +390,36 @@ var linkify = function($, document) {
 		}
 	};
 
+	// Returns a boolean indicating the users browser support.
+	var _isSupported = function() {
+		return $.inArray(util.browser, _options.supported) !== -1 && util.supports.data;
+	};
+
 	// Create a peer session.
 	var _createSession = function(callback) {
-		var session = new Peer(util.randomToken(), {
-			host: _options.host,
-			port: _options.port,
-			secure: _options.secure,
-			config: _options.config
-		});
+		if(_isSupported()) {
+			var session = new Peer(util.randomToken(), {
+				host: _options.host,
+				port: _options.port,
+				secure: _options.secure,
+				config: _options.config
+			});
 
-		_setText('status', 'initializing');
+			_setText('status', 'initializing');
 
-		session.on('open', function(id) {
-			_session.id = id;
-			_session.reference = session;
+			session.on('open', function(id) {
+				_session.id = id;
+				_session.reference = session;
 
-			if(typeof callback === 'function') {
-				callback();
-			}
-		});
+				if(typeof callback === 'function') {
+					callback();
+				}
+			});
+		} else {
+			_message.show('unsupported', {
+				browsers: _options.supported.join(', ')
+			});
+		}
 	};
 
 	// Bind connection handler.
