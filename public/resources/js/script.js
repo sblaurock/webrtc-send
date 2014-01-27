@@ -5,7 +5,14 @@ var linkify = function($, document) {
 		secure: true,
 		connectTimeout: 20000,
 		config: {'iceServers': [
-			{ url: 'stun:stun.l.google.com:19302' },
+			{
+				url: 'stun:stun.l.google.com:19302'
+			},
+			{
+				url: 'turn:54.84.46.251:3478',
+				username: 'linkify',
+				credential: 'rVS5YbroEn9zvO8k'
+			}
 		]},
 		supported: [
 			'Firefox',
