@@ -79,6 +79,42 @@ h2 {
 	-webkit-animation-play-state: paused !important;
 	animation-play-state: paused !important;
 }
+#unsupported {
+	position: fixed;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	background: #000;
+	z-index: 3;
+	display: none;
+	width: 100%;
+	height: 100%;
+}
+#unsupported.visible {
+	display: table;
+}
+#unsupported-inner {
+	display: table-cell;
+	vertical-align: middle;
+	padding: 0 5%;
+}
+#unsupported-inner div {
+	display: inline-block;
+	vertical-align: middle;
+}
+#unsupported h1, #unsupported h2 {
+	color: #eee;
+	line-height: 140%;
+}
+#unsupported span {
+	display: inline-block;
+	vertical-align: bottom;
+	color: #b94a48;
+	font-size: 95px;
+	margin: 0 35px 0 0;
+	line-height: 95px;
+}
 #droparea {
 	width: 100%;
 	height: 100%;

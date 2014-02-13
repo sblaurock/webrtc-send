@@ -1,14 +1,14 @@
-- Set up TURN server.
-- Secure a more reliable hosting platform.
-	- Configure internal PeerServer cloud or license service.
++ Set up TURN server.
++ Secure a more reliable hosting platform.
+	+ Configure internal PeerServer cloud or license service.
 + Decide on a better name.
 	+ Secure domain and Twitter handle.
-- File transfer progress indicator.
++ File transfer progress indicator.
 - UI improvements.
 	- File type display.
 - Disallow or handle multiple peer to single host relationship.
 - Handle multiple file input case.
-- Make entire document able to accept file drop.
++ Make entire document able to accept file drop.
 - Incompatible browser detection and messaging.
 - Connection error handling (retry, failure messaging).
 - Shorter URL support.
@@ -16,3 +16,5 @@
 - Encryption & SSL.
 - Support for large files.
 - Develop Google Chrome extension.
+- Ability to send another file after successful transfer.
+- Set up domain and routing.

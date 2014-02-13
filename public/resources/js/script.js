@@ -35,8 +35,7 @@ var linkify = function($, document) {
 			messages: {
 				ready: '<span class="icon">&#10004;</span>File is ready. Click to copy link to clipboard: <span id="share" class="link">{{link}}</span>',
 				file: '<span class="icon">&#10004;</span>File is ready! {{type}} ({{size}}) - <a target="_blank" class="link" href="{{url}}">Click here to download.</a>',
-				copied: '<span class="icon">&#10004;</span>Link has been copied to your clipboard.',
-				unsupported: '<span class="error icon">&#9888;</span>Unfortunately, browser support is currently limited to: {{browsers}}.'
+				copied: '<span class="icon">&#10004;</span>Link has been copied to your clipboard.'
 			}
 		},
 		dropArea: {
@@ -71,6 +70,12 @@ var linkify = function($, document) {
 			first: $('#progress-first'),
 			second: $('#progress-second'),
 			animationDuration: 50
+		},
+		unsupported: {
+			reference: $('#unsupported'),
+			classes: {
+				visible: 'visible'
+			}
 		}
 	};
 
@@ -438,9 +443,7 @@ var linkify = function($, document) {
 				}
 			});
 		} else {
-			_message.show('unsupported', {
-				browsers: _options.supported.join(', ')
-			});
+			_options.unsupported.reference.addClass(_options.unsupported.classes.visible);
 		}
 	};
 
