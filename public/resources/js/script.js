@@ -1,19 +1,9 @@
-var linkify = function($, document) {
+var app = function($, document) {
 	var _options = {
-		host: 'linkify-server.herokuapp.com',
+		host: 'HOST',
 		port: '443',
 		secure: true,
 		connectTimeout: 20000,
-		config: {'iceServers': [
-			{
-				url: 'stun:stun.l.google.com:19302'
-			},
-			{
-				url: 'turn:54.84.46.251:3478',
-				username: 'linkify',
-				credential: 'rVS5YbroEn9zvO8k'
-			}
-		]},
 		supported: [
 			'Firefox',
 			'Chrome'
@@ -591,8 +581,8 @@ $(document).ready(function() {
 	var hash = window.location.hash;
 
 	if(hash && typeof hash === 'string' && hash.length > 0) {
-		linkify.initiatePeer(hash.replace(/\W/g, ''));
+		app.initiatePeer(hash.replace(/\W/g, ''));
 	} else {
-		linkify.initiateHost();
+		app.initiateHost();
 	}
 });

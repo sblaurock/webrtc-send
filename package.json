@@ -1,5 +1,5 @@
 {
-  "name": "linkify",
+  "name": "webrtc-send",
   "version": "0.0.0",
   "description": "Simple peer to peer file transfer.",
   "main": "index.js",
@@ -8,14 +8,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/sblaurock/linkify.git"
+    "url": "git://github.com/sblaurock/webrtc-send.git"
   },
   "author": "@sblaurock",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/sblaurock/linkify/issues"
+    "url": "https://github.com/sblaurock/webrtc-send/issues"
   },
-  "homepage": "https://github.com/sblaurock/linkify",
+  "homepage": "https://github.com/sblaurock/webrtc-send",
   "dependencies": {
     "express": "~3.4.7"
   },
